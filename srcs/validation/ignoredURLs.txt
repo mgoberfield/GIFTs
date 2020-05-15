@@ -1,0 +1,5 @@
+# Used by checkGMLFiles.py to determine which xlink:href paths are ignored in the validation process
+#
+# Permanent exclusions
+
+# Temporary exclusions (to be re-enabled once available)
