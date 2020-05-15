@@ -25,8 +25,7 @@ We are not obligated to make this software work on your computers.
 Installation
 ------------
 
-This README file is at the top directory of the installation package. You have successfully unpacked the zip
-file.
+This README file is at the top directory of the installation package.
 
 The package has the following directory tree:
 
