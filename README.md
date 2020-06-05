@@ -6,7 +6,7 @@ service mark, trademark, manufacturer, or otherwise, does not constitute or impl
 Department of Commerce. The Department of Commerce seal and logo, or the seal and logo of a DOC bureau, shall not be used in any manner to
 imply endorsement of any commercial product or activity by DOC or the United States Government.
 
-# GIFT - Generate IWXXM From TAC
+# GIFTs - Generate IWXXM From TAC software
 This repository hosts software provided by the United States' National Weather Service that transforms Annex 3 Traditional Alphanumeric
 Code (TAC) forms into IWXXM format.
 
