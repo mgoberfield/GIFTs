@@ -1,7 +1,9 @@
-﻿This repository is a scientific product and is not official communication of the National Oceanic and Atmospheric Administration (NOAA), or the United States Department of Commerce (DOC). All NOAA GitHub project code is provided on an ‘as is’ basis and the user assumes responsibility for its use. Any claims against the Department of Commerce or Department of Commerce bureaus stemming from the use of this GitHub project will be governed by all applicable federal law. Any reference to specific commercial products, processes, or services by service mark, trademark, manufacturer, or otherwise, does not constitute or imply their endorsement, recommendation, or favoring by the Department of Commerce. The Department of Commerce seal and logo, or the seal and logo of a DOC bureau, shall not be used in any manner to imply endorsement of any commercial product or activity by DOC or the United States Government.
-
+# Disclaimer
 -------------------------------------------------------------------------------
 
+This repository is a scientific product and is not official communication of the National Oceanic and Atmospheric Administration (NOAA), or the United States Department of Commerce (DOC). All NOAA GitHub project code is provided on an ‘as is’ basis and the user assumes responsibility for its use. Any claims against the Department of Commerce or Department of Commerce bureaus stemming from the use of this GitHub project will be governed by all applicable federal law. Any reference to specific commercial products, processes, or services by service mark, trademark, manufacturer, or otherwise, does not constitute or imply their endorsement, recommendation, or favoring by the Department of Commerce. The Department of Commerce seal and logo, or the seal and logo of a DOC bureau, shall not be used in any manner to imply endorsement of any commercial product or activity by DOC or the United States Government.
+
+-------------------------------------------------------------------------------
 # Generate IWXXM From TAC
 This repository hosts software provided by the United States National Weather Service's [Meteorological Development Laboratory](https://vlab.ncep.noaa.gov/web/mdl) (MDL) that transforms Annex 3 Traditional Alphanumeric Code (TAC) forms into IWXXM v3.0 format.
 
@@ -109,4 +111,4 @@ It is important that your IWXXM XML documents 'validate' before dissemination. I
 -------------------
 <sup>1</sup>Not quite for the Space Weather Advisory.  The installation does not install the required SkyField python package, a package that has lots of dependencies of its own. If a Space Weather Center wants to give this software a try, please contact MDL directly and we will provide instructions to get this installed and running at your site.
 
-<sup>2</sup>We know the project name is presumptuous.
+<sup>2</sup>Yes, we know the project name is presumptuous.
