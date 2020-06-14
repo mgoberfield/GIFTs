@@ -28,7 +28,7 @@ This README file is at the top directory of the installation package.
 
 The package has the following directory tree:
 
-<TOP_DIR>
+	<TOP_DIR>
     bin  -- Java CRUX utility
     externalSchemas  -- Local copies of schemas. Should be occasionally refreshed from their respective sources.
         schemas.opengis.net
@@ -141,7 +141,7 @@ Invoking the script for help with the '-h' or '--help' flag provides the followi
                         	IWXXM version major.minor number to validate against,
                         	default '3.0'
 
-The --version flag
+--version flag
 ------------------
 By default, the validation tool checks IWXXM v3.0 documents. If your IWXXM XML documents are based on a 
 different version of IWXXM, provide the appropriate major.minor combination using the '-v' or '--version'
@@ -153,13 +153,13 @@ RDF files from the WMO Code Registry. If a copy is not found, the script will go
 need access to the Internet when running this script the first time, and when switching to new versions.
 
 
-The --fetch flag
+--fetch flag
 ----------------
 If circumstances require it, you can force the script to download and overwrite the local cache of the 
 IWXXM schemas and schematron files with the '-f' or '--force' flag. (Default: do not fetch)
 
 
-The --keep flag
+--keep flag
 ---------------
 The validator creates an OASIS style Catalog file on-the-fly for local validation which speeds up the
 process up considerably. It is normally deleted when the script finishes. (Default: do not keep)
@@ -172,14 +172,14 @@ If a catalog-<v>.xml is already present in the directory, the script will NOT ov
 is.
 
 
-The --noGMLChecks flag
+--noGMLChecks flag
 ----------------------
 After performing XML validation, a further examination of the internal and external references within each
 XML document is done. As a prerequisite, this step requires the XML document to be 'well-formed'. If this
 flag is given, this check is skipped. (Default: do GML reference checks)
 
 
-The --useInternet flag
+--useInternet flag
 ----------------------
 If GML checks are enabled, the algorithm has the option to query code registries which requires
 Internet connectivity (and can be slow). Or the algorithm can refer to the local copy of the RDF files to
