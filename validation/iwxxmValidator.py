@@ -52,20 +52,24 @@ def validate_xml_files(cmdargs):
     thisCatalogFile = catalogTemplate.replace('.template', '-%s' % cmdargs.version)
 
     # replace ${INSTALL_DIR}, ${IWXXM_VERSION}, and ${IWXXM_VERSION_DIR} with appropriate values in the catalog.xml file
-    if platform.system() == 'Windows':
-        platformCWD = 'file%c:%s' % (os.path.sep, cwd)
-        platformSchemaDirectory = 'file%c:%s' % (os.path.sep, schemaDirectory)
+    if not os.path.exists(thisCatalogFile):
+        if platform.system() == 'Windows':
+            platformCWD = 'file%c:%s' % (os.path.sep, cwd)
+            platformSchemaDirectory = 'file%c:%s' % (os.path.sep, schemaDirectory)
+        else:
+            platformCWD = cwd
+            platformSchemaDirectory = schemaDirectory
+    
+        with open(catalogTemplate) as templateFhandle:
+            with open(thisCatalogFile, 'w') as catalogFhandle:
+                catalogText = templateFhandle.read()
+                catalogText = catalogText.replace("${INSTALL_DIR}", platformCWD)
+                catalogText = catalogText.replace("${IWXXM_VERSION}", cmdargs.version)
+                catalogText = catalogText.replace("${IWXXM_VERSION_DIR}", platformSchemaDirectory)
+                catalogFhandle.write(catalogText)
     else:
-        platformCWD = cwd
-        platformSchemaDirectory = schemaDirectory
-
-    with open(catalogTemplate) as templateFhandle:
-        with open(thisCatalogFile, 'w') as catalogFhandle:
-            catalogText = templateFhandle.read()
-            catalogText = catalogText.replace("${INSTALL_DIR}", platformCWD)
-            catalogText = catalogText.replace("${IWXXM_VERSION}", cmdargs.version)
-            catalogText = catalogText.replace("${IWXXM_VERSION_DIR}", platformSchemaDirectory)
-            catalogFhandle.write(catalogText)
+        print("Catalog file version %s already exists in directory. Using it for validation." % cmdargs.version)
+        cmdargs.keep = True
 
     print('Validating all XML files in %s with IWXXM XML schemas and schematron (version: %s)' % (cmdargs.directory,
                                                                                                   cmdargs.version))

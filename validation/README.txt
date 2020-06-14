@@ -111,6 +111,7 @@ The package has the following directory tree:
             w3c
                 1999
                 2001
+
     schemas -- local copies of the IWXXM schemas (created later)
     schematrons -- local copies of the IWXXM schematrons (created later)
 
@@ -169,6 +170,9 @@ The catalog file can be used in "XML-aware" editors that can perform XML full va
 set, the OASIS Catalog file is kept in the top-level directory with the name, 'catalog-<v>.xml' where
 <v> is the IWXXM major.minor number.
 
+If a catalog-<v>.xml is already present in the directory, the script will NOT overwrite it, but use it as
+is.
+
 
 The --noGMLChecks flag
 ----------------------
@@ -199,6 +203,9 @@ basic, relatively "unfriendly" tool if you are new to XML documents and the tech
 them. It _can_ help you find errors in your documents but sometimes the error messages from CRUX are
 cryptic. We make no apologies for that.
 
+This script can be used to quickly validate IWXXM messages before dissemination in an operational
+environment.
+
 There are numerous examples of validated IWXXM documents on the Internet.  The canoncial IWXXM source has
 a few examples in the 'examples' folder under http://schemas.wmo.int/iwxxm/<v>/examples.
 
@@ -211,6 +218,11 @@ https://groups.google.com/a/wmo.int/forum/#!forum/cbs-tt-avxml
 
 There are people on that forum who have probably seen your issue before and can help.
 -------
+
 An 'ignoredURLs.txt' file is provided for the case when your IWXXM documents have <extension> blocks that
 contain references to URLs that are not part of the WMO Code Registry. By adding the URLs in this file,
-this will suppress warning messages from checkGMLReferences routine.
+this will suppress warning messages from the checkGMLReferences routine.
+
+-------
+The schematron portion of the CRUX utility will create a directory cache called 'cruxcache' sub-directory
+in the directory designated in java.io.tmpdir
