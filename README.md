@@ -54,7 +54,7 @@ If the installation was successful, you should see a small GUI appear on your sc
 
 ![Initial state](images/demo1-1.png)
 
-The top row consists of a button, 'TAC File:' and a text field. Clicking on the 'TAC File' button pops up a secondary, file selection dialog, showing text files in the demo directory.  Select 'metars.txt' and click on 'Open'.  The GUI now looks like this:
+The top row consists of a button, 'TAC File:' and a text field. Clicking on the 'TAC File' button pops up a secondary, file selection dialog, showing text files in the demo directory.  Select 'metars.txt' and click on 'Open'.
 
 ![Metar file selected](images/demo1-2.png)
 
