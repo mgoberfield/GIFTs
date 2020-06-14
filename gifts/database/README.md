@@ -1,7 +1,7 @@
 Introduction
 ------------
 
-This sub-directory, `/database`, contains a very simple table, aerodromes.tbl which is converted into a 'picked'
+This sub-directory, `/database`, contains a very simple table, aerodromes.tbl which is converted into a 'pickled'
 python dictionary.
 
 This dictionary serves as a means to map ICAO identifiers to name and place which is needed for METAR, SPECI
