@@ -1,6 +1,5 @@
 # Disclaimer
--------------------------------------------------------------------------------
-
+------------------------------------------------------------------------------
 This repository is a scientific product and is not official communication of the National Oceanic and Atmospheric Administration (NOAA), or the United States Department of Commerce (DOC). All NOAA GitHub project code is provided on an ‘as is’ basis and the user assumes responsibility for its use. Any claims against the Department of Commerce or Department of Commerce bureaus stemming from the use of this GitHub project will be governed by all applicable federal law. Any reference to specific commercial products, processes, or services by service mark, trademark, manufacturer, or otherwise, does not constitute or imply their endorsement, recommendation, or favoring by the Department of Commerce. The Department of Commerce seal and logo, or the seal and logo of a DOC bureau, shall not be used in any manner to imply endorsement of any commercial product or activity by DOC or the United States Government.
 
 -------------------------------------------------------------------------------
@@ -96,7 +95,7 @@ And for capturing the individual TAC forms:
     ^TC ADVISORY.+
     ^TAF(?:\s+(?:AMD|COR|CC[A-Z]|RTD))?\s+[A-Z]{4}.+?=
     ^VA ADVISORY.+
-This means that for the METAR, SPECI and TAF, the product starts with those keywords, respectively, and the end of the product denoted with a '=' character.  For the advisories, the software assumes there is just one advisory per input file.
+This means that for the METAR, SPECI and TAF, the product starts with one of those keywords and the product ends with a '=' character.  For the advisories, the software assumes there is just one advisory per input file.
 
 The WMO AHL line in the TAC file is crucial in forming the proper filename for the IWXXM Meteorological Bulletin, which is shown in the 'IWXXM XML file" text field.  The format of the filename follows the specifications outlined for Aviation XML products in WMO No. 368 Manual on the Global Telecommunication System.
 
