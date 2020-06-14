@@ -32,14 +32,14 @@ where **v** is the major number of the python interpreter in use, either 2 or 3.
 If you do not have sufficient  permissions to modify your Python's site-packages directory, then uncompress and untar the distribution in your local directory:
 
 	$ cd /path/to/your/directory
-	$ tar zxf /path/to/GIFTs/repository_clone/dist/t2x-1.0.0.tar.gz
+	$ tar zxf /path/to/GIFTs/repository_clone/dist/gifts-1.0.0.tar.gz
 
 Be sure to update your PATH or PYTHONPATH environmental variable to include this directory and the `/common` sub-directory so the Python interpreter can find the modules. The python files' `import` statements will need to be modified too, if you should use this alternative.
 
 ## Configuration
 
 ### xmlConfig
-While the METAR/SPECI and TAF encoders themselves require minimal setup for use, it is helpful to know how the resulting IWXXM documents can be tweeked. The file [xmlConfig.py](https://github.com/NOAA-MDL/GIFTs/blob/master/LICENSE) has comments throughout describing the various XML configuration variables: what they're for, and what values they can take on should you want to make changes. The most likely change you will make is whether to provide the altitude of the aerodromes. The vertical datum must be known and provided in order to correctly describe the aerodromes' elevations.
+While the METAR/SPECI and TAF encoders themselves require minimal setup for use, it is helpful to know how the resulting IWXXM documents can be tweeked. The file [xmlConfig.py](https://github.com/NOAA-MDL/GIFTs/blob/master/gifts/common/xmlConfig.py) has comments throughout describing the various XML configuration variables: what they're for, and what values they can take on should you want to make changes. The most likely change you will make is whether to provide the altitude of the aerodromes. The vertical datum must be known and provided in order to correctly describe the aerodromes' elevations.
 
 ### geoLocations database
 The METAR/SPECI and TAF encoders will need an external/user-provided resource that maps the ICAO 4-character identifiers to the aerodromes' location. The `database/` subdirectory contains a simple python script to construct a python dictionary to perform the mapping. Please consult the README.txt file in that directory for more details on how to create a simple database that the GIFT software can use. Either this technique or setting up a database client using one of Python's database modules is required in order to use the GIFT encoders. The latter technique is beyond the scope of these instructions.
@@ -104,7 +104,7 @@ If you try to read the resulting XML file, you will see that it has no extraneou
 The decoders were written to follow Annex 3 specifications for the TAC forms. If your observations or forecast products deviate significantly from Annex 3, then this software will likely refuse to encode the data into IWXXM.  Fortunately, solutions can be readily found, ranging from trivial to challenging (see United States METAR/SPECI [reports](https://nws.weather.gov/schemas/iwxxm-us/3.0/examples/metars)). If there is enough interest or requests about using this software, MDL can provide additional background information on how the software works and how it can be modified to meet your needs.
 
 # IWXXM Validation
-It is important that your IWXXM XML documents 'validate' before dissemination. If they don't, they may be rejected by your consumers. Separate from the GIFT software, MDL has provided a convienent python script that invokes NCAR's CRUX utility along with IWXXM schemas, schematron and supporting data files to perform this crucial step before disseminating your IWXXM products. The software can be found in the `/validation` subdirectory. Please consult the README file for that utility.  You can use this utility to validate the IWXXM XML files created by the `demo1.py` program. 
+It is important that your IWXXM XML documents 'validate' before dissemination. If they don't, they may be rejected by your consumers. Separate from the GIFT software, MDL has provided a convienent python script that invokes NCAR's CRUX utility along with IWXXM schemas, schematron and supporting data files to perform this crucial step before disseminating your IWXXM products. The software can be found in the `/validation` subdirectory. Please consult the [README](https://github.com/NOAA-MDL/GIFTs/blob/master/validation/README.md) file for that utility.  You can use this utility to validate the IWXXM XML files created by the `demo1.py` program. 
 
 <sup>1</sup>Not quite for the Space Weather Advisory.  The installation does not install the required SkyField python package, a package that has lots of dependencies of its own. If a Space Weather Center wants to give this software a try, please contact MDL directly and we will provide instructions to get this installed and running at your site.
 
