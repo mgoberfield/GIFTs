@@ -1,8 +1,8 @@
 import re
 import xml.etree.ElementTree as ET
 
-from ..common import xmlConfig as des
-from ..common import xmlUtilities as deu
+from . import xmlConfig as des
+from . import xmlUtilities as deu
 
 
 class Base(object):

@@ -16,7 +16,7 @@ dev: ${VENV}
 	source ${VENV}/bin/activate; pip install -e .[test]
 
 lint: dev
-	${VENV}/bin/flake8 --max-line-length=120 t2x tests
+	${VENV}/bin/flake8 --max-line-length=120 gifts tests
 
 test: dev
 	${VENV}/bin/pytest --cov=gifts tests

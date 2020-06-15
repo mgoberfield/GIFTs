@@ -314,7 +314,7 @@ NXT ADVISORY: NO FURTHER ADVISORIES="""
                 elif acnt == 2:
                     assert volume[0].text == '550'
                     assert volume[1].text == 'STD'
-                    assert volume[2].get('nilReason') == missing[0]
+                    assert volume[2].get('nilReason') == des.MSSG
                     assert ashCloud[0][1].text == '135'
                     assert ashCloud[0][2].text == '40'
                     assert ashCloud[0][2].get('uom') == '[kn_i]'

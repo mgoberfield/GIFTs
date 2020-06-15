@@ -1,7 +1,7 @@
 import logging
 
-from ..common import bulletin
-from ..common import xmlConfig as des
+from . import bulletin
+from . import xmlConfig as des
 
 
 class Encoder(object):
