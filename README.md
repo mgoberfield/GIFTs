@@ -23,7 +23,7 @@ This software is written entirely in the Python language. Python interpreter ver
 ## Installation
 The following instructions assume you are using a computer with a Unix-based operating system. Installing this software on other operating systems may require some adjustments. These instructions install software that decodes the traditional alphanumeric code (TAC) forms of METAR, SPECI, TAF, Space Weather<sup>1</sup>, Tropical Cyclone and Volcanic Ash advisories and encodes them into IWXXM equivalents.
 
-To install the GIFTs<sup>2</sup> package system-wide, use Python's package installer, pip, and issue the following commands:
+To install the GIFTs<sup>2</sup> package system-wide, use Python's setuptools package and issue the following commands:
 
 	$ cd /path/to/install/directory
 	$ git clone git@github.com:NOAA-MDL/GIFTs.git
