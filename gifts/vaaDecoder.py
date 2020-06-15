@@ -461,8 +461,8 @@ class Decoder(tpg.Parser):
         while result:
             try:
                 self._cloud['movement'] = result.groupdict()
-                if self._cloud['movement']['bottom'] == '':
-                    self._cloud['movement']['bottom'] = 'SFC'
+                if self._cloud['movement']['bottom'] is None:
+                    self._cloud['movement']['bottom'] = result.group(2)
                 self._cloud['movement']['uom'] = {'KT': '[kn_i]', 'MPS': 'm/s'}.get(self._cloud['movement']['uom'])
 
             except AttributeError:

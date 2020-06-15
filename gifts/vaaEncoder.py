@@ -269,7 +269,8 @@ class Encoder:
                 indent5.text = 'SFC'
 
             except TypeError:
-                indent5.set('nilReason', self.codes[des.NIL][des.MSSG][0])
+                indent5.set('nilReason', des.MSSG)
+                indent5.set('xsi:nil', 'true')
 
             if 'VRB' in lyr['dir']:
                 indent2.set('variableWindDirection', 'true')
@@ -368,7 +369,8 @@ class Encoder:
             indent2.text = 'SFC'
 
         except TypeError:
-            indent2.set('nilReason', self.codes[des.NIL][des.MSSG][0])
+            indent2.set('nilReason', des.MSSG)
+            indent2.set('xsi:nil', 'true')
 
         if 'pnts' in lyr:
 

@@ -1,7 +1,8 @@
 #!/usr/bin/env python
-
+import os
 import re
 import logging
+import platform
 import pickle
 import xml.etree.ElementTree as ET
 
@@ -88,11 +89,15 @@ class simpleGUI(object):
         encoderActivity = TextHandler(self.scrld_txt)
         self.logger.addHandler(encoderActivity)
         #
-        # Now get GIFT TAF and METAR/SPECI software set up
-        with open('aerodromes.db', 'rb') as _fh:
-            aerodromes = pickle.load(_fh)
+        # Now get GIFT software set up
+        if platform.system() == 'Windows':
+            with open('aerodromes.win.db', 'rb') as _fh:
+                aerodromes = pickle.load(_fh)
+        else:
+            with open('aerodromes.db', 'rb') as _fh:
+                aerodromes = pickle.load(_fh)
         #
-        # Now some regular expressions to identify TAC file contents based on WMO AHL line
+        # Regular expressions to identify TAC file contents based on WMO AHL line
         self.encoders = []
         self.encoders.append((re.compile(r'^S(A|P)[A-Z][A-Z]\d\d\s+[A-Z]{4}\s+\d{6}', re.MULTILINE),
                               gifts.METAR.Encoder(aerodromes)))
@@ -138,7 +143,7 @@ class simpleGUI(object):
 
     def open_file(self, *event):
 
-        filepath = askopenfilename(filetypes=[("Text Files", "*.txt"), ("All Files", "*.*")])
+        filepath = askopenfilename(initialdir=os.getcwd(), filetypes=[("Text Files", "*.txt"), ("All Files", "*.*")])
         if not filepath:
             return
 

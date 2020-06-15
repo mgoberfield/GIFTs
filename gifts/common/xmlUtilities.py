@@ -12,8 +12,6 @@ import time
 import uuid
 import xml.etree.ElementTree as ET
 
-from . import xmlConfig as des
-
 CardinalPtsToDegreesS = {'N': '360', 'NNE': '22.5', 'NE': '45', 'ENE': '67.5',
                          'E': '90', 'ESE': '112.5', 'SE': '135', 'SSE': '157.5',
                          'S': '180', 'SSW': '202.5', 'SW': '225', 'WSW': '247.5',
