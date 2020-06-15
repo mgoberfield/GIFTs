@@ -25,17 +25,17 @@ The following instructions assume you are using a computer with a Unix-based ope
 
 To install the GIFTs<sup>2</sup> package system-wide, use Python's package installer, pip, and issue the following commands:
 
-	$ cd /path/to/GIFTs/repository_clone/dist
-	$ pip install gifts-1.0.0-pyv-none-any.whl
+	$ cd /path/to/install/directory
+	$ git clone git@github.com:NOAA-MDL/GIFTs.git
+	$ cd GIFTs
+	$ python setup.py install
+
+If you do not have sufficient  permissions to modify your Python's site-packages directory, then update your PATH or PYTHONPATH environmental variable to include the directories where the source code resides.
+
+	$ setenv PATH ${PATH}:/path/to/install/directory/GIFTs/gifts:/path/to/install/directory/GIFTs/gifts/common # C-shell
+	% export PATH=${PATH}:/path/to/install/directory/GIFTs/gifts:/path/to/install/directory/GIFTs/gifts/common # Bourne-shell
 	
-where **v** is the major number of the python interpreter in use, either 2 or 3.
-
-If you do not have sufficient  permissions to modify your Python's site-packages directory, then uncompress and untar the distribution in your local directory:
-
-	$ cd /path/to/your/directory
-	$ tar zxf /path/to/GIFTs/repository_clone/dist/gifts-1.0.0.tar.gz
-
-Be sure to update your PATH or PYTHONPATH environmental variable to include this directory and the `/common` sub-directory so the Python interpreter can find the modules. The python files' `import` statements will need to be modified too, if you should use this alternative.
+The python files' `import` statements will need to be modified too, if you should use this alternative.
 
 ## Configuration
 
@@ -63,7 +63,7 @@ The "Activity Msgs:" is a label to the scrolled text window which will contain a
 
 ![Output from decoder](images/demo1-3.png)
 
-In the scrolled text window are messages from the METAR/SPECI TAC decoder which found some issues inside 'tac1.txt'. The first message from the decoder:
+In the scrolled text window are messages from the METAR/SPECI TAC decoder which found some issues inside 'metars.txt'. The first message from the decoder:
 
     METAR LGAZ NIL
               ^
