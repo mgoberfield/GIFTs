@@ -18,6 +18,12 @@ from .common import xmlUtilities as deu
 from .common import tpg
 
 
+class MissingAirSpaceWinds(tpg.Error):
+    """Not providing wind information when volcanic ash cloud is not observed in satellite imagery
+    """
+    pass
+
+
 class Decoder(tpg.Parser):
     r"""
     set lexer = ContextSensitiveLexer
@@ -48,7 +54,7 @@ class Decoder(tpg.Parser):
     token box: '(\d{2,3})(KM|NM)\s+WID\s+LINE\s+BTN' ;
     token latlon: '(?P<lat>[NS]\d{2,4})\s+(?P<lon>[EW]\d{3,5})' ;
     token movement: 'MOV\s+([NEWS]{1,3})\s+(\d{1,3})(-\d{2,3})?(?P<uom>KMH|KT)' ;
-    token vanotid: 'VA NOT ID[\S\s]+(?=FCST VA CLD \+6)' ;
+    token vanotid: 'VA NOT IDENTIFIABLE[\S\s]+(?=FCST VA CLD \+6)' ;
     token noashexp: 'NO\s+(ASH|VA)\s+EXP' ;
     token notavbl:  'NOT\s+AVBL' ;
     token notprvd:  'NOT\s+PROVIDED' ;
@@ -164,14 +170,26 @@ class Decoder(tpg.Parser):
                 err_msg += 'at line %d column %d.' % (self.lexer.cur_token.end_line, self.lexer.cur_token.end_column)
                 self.vaa['err_msg'] = err_msg
 
-            return self.vaa
+        except MissingAirSpaceWinds as msg:
+
+            if not self._is_a_test():
+                tacLines = tac.split('\n')
+                debugString = '\n%%s\n%%%dc\n%%s' % msg.column
+                errorInTAC = debugString % ('\n'.join(tacLines[:msg.line]), '^',
+                                            '\n'.join(tacLines[msg.line:]))
+                self._Logger.info('%s\n%s' % (errorInTAC, msg.msg))
+                self.vaa['err_msg'] = msg.msg
 
         except Exception:
             self._Logger.exception(vaa)
-            return self.vaa
+
+        return self.vaa
 
     def _is_a_test(self):
-        return 'status' in self.vaa and self.vaa['status'] == 'TEST'
+        try:
+            return self.vaa['status'] == 'TEST'
+        except KeyError:
+            return False
 
     def eatCSL(self, name):
         'Overrides super definition'
@@ -455,9 +473,14 @@ class Decoder(tpg.Parser):
     def vanotid(self, s):
 
         spos = 0
-        self._cloud = dict(nil=self.lexer.cur_token.name)
         result = self._reWinds.search(s)
 
+        if result is None:
+            token_object = self.lexer.token()
+            raise MissingAirSpaceWinds((token_object.line, token_object.column), 'For VA NOT IDENTIFIABLE conditions, '
+                                       'wind information shall be provided')
+
+        self._cloud = dict(nil=self.lexer.cur_token.name)
         while result:
             try:
                 self._cloud['movement'] = result.groupdict()

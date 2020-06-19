@@ -22,4 +22,5 @@ __pycache__
 /.coveragerc
 /.mypy_cache
 /.pytest_cache
-
+driver.py
+sfstns.db
