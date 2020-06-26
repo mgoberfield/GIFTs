@@ -268,10 +268,6 @@ class Encoder:
                 indent5 = ET.SubElement(indent4, 'aixm:lowerLimitReference')
                 indent5.text = 'SFC'
 
-            except TypeError:
-                indent5.set('nilReason', des.MSSG)
-                indent5.set('xsi:nil', 'true')
-
             if 'VRB' in lyr['dir']:
                 indent2.set('variableWindDirection', 'true')
             else:
@@ -322,13 +318,10 @@ class Encoder:
             self.airspaceVolume(indent3, lyr)
 
             try:
-                if 'VRB' in lyr['movement']['dir']:
-                    indent2.set('variableWindDirection', 'true')
-                else:
-                    indent3 = ET.Element('directionOfMotion')
-                    indent3.text = lyr['movement']['dir']
-                    indent3.set('uom', 'deg')
-                    indent2.append(indent3)
+                indent3 = ET.Element('directionOfMotion')
+                indent3.text = lyr['movement']['dir']
+                indent3.set('uom', 'deg')
+                indent2.append(indent3)
 
                 indent3 = ET.Element('speedOfMotion')
                 indent3.text = lyr['movement']['spd']
@@ -390,9 +383,6 @@ class Encoder:
             indent8.text = ' '.join(lyr['pnts'])
 
     def postContent(self):
-
-        if self.nilPresent:
-            return
 
         indent = ET.SubElement(self.XMLDocument, 'remarks')
         if 'NIL' in self.decodedTAC['remarks']:

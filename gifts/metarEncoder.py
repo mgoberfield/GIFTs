@@ -168,15 +168,9 @@ class Annex3(Common.Base):
                 if len(traceback.extract_tb(sys.exc_info()[2])) > 1:
                     self._Logger.error(self.tacString)
                 #
-                # Mandatory elements shall be reported missing
-                elif element in ['temps', 'altimeter', 'wind']:
-                    function(indent1, None)
-                #
                 # If visibility should be reported but isn't...
-                elif 'cavok' not in self.decodedTAC and element in ['vsby', 'rvr']:
-                    if element == 'vsby':
-                        function(indent1, None)
-                    elif element == 'rvr' and 'vrbrvr' not in self.decodedTAC:
+                elif 'cavok' not in self.decodedTAC and element == 'rvr':
+                    if 'vrbrvr' not in self.decodedTAC:
                         try:
                             token = self.decodedTAC['vsby']
                             if int(deu.checkVisibility(token['value'], token['uom'])) < des.RVR_MaximumDistance:
