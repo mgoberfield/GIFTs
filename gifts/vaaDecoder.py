@@ -322,7 +322,7 @@ class Decoder(tpg.Parser):
             try:
                 deg, minu = int(slon[1:4]), int(slon[4:6])
             except ValueError:
-                deg, minu = int(slon[1:3]), 0
+                deg, minu = int(slon[1:4]), 0
 
             lon = deg + minu * 0.01667
             if slon[0] == 'W':
@@ -445,7 +445,7 @@ class Decoder(tpg.Parser):
         try:
             deg, minu = int(rlat[1:3]), int(rlat[3:5])
         except ValueError:
-            deg, minu = int(rlat[1:]), 0
+            deg, minu = int(rlat[1:3]), 0
 
         latitude = deg + minu * 0.01667
         if rlat[0] == 'S':
@@ -455,7 +455,7 @@ class Decoder(tpg.Parser):
         try:
             deg, minu = int(rlon[1:4]), int(rlon[4:6])
         except ValueError:
-            deg, minu = int(rlon[1:]), 0
+            deg, minu = int(rlon[1:4]), 0
 
         longitude = deg + minu * 0.01667
         if rlon[0] == 'W':
@@ -466,9 +466,12 @@ class Decoder(tpg.Parser):
     def movement(self, s):
 
         result = self.lexer.tokens[self.lexer.cur_token.name][0].match(s)
-        self._cloud['movement'] = {'dir': deu.CardinalPtsToDegreesS.get(result.group(1), 'VRB'),
-                                   'spd': result.group(2),
-                                   'uom': {'KT': '[kn_i]', 'KMH': 'km/h'}.get(result.group('uom'))}
+        try:
+            self._cloud['movement'] = {'dir': deu.CardinalPtsToDegreesS[result.group(1)],
+                                       'spd': result.group(2),
+                                       'uom': {'KT': '[kn_i]', 'KMH': 'km/h'}.get(result.group('uom'))}
+        except KeyError:
+            raise tpg.WrongToken
 
     def vanotid(self, s):
 

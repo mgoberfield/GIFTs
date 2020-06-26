@@ -41,6 +41,8 @@ def PP(tree):
 codes = deu.parseCodeRegistryTables(des.CodesFilePath, [des.COLOUR_CODES, des.NIL])
 missing = codes[des.NIL][des.MSSG]
 
+des.TRANSLATOR = True
+
 
 def test_vaaFailureModes():
 
@@ -104,6 +106,41 @@ IMAGERY DUE TO MET CLOUD IN AREA. ADVISORY WILL BE UPDATED
 IF NEW INFORMATION IS RECEIVED.
 NXT ADVISORY: NO FURTHER ADVISORIES
 """
+    decoder = vD.Decoder()
+    result = decoder(test)
+    assert 'err_msg' in result
+
+
+def test_vaaWndDirection():
+
+    import gifts.vaaDecoder as vD
+
+    test = """FVAU03 ADRM 150252
+VA ADVISORY
+DTG: 20200615/0252Z
+VAAC: DARWIN
+VOLCANO: SEMERU 263300
+PSN: S0806 E11255
+AREA: INDONESIA
+SUMMIT ELEV: 3676M
+ADVISORY NR: 2020/96
+INFO SOURCE: CVGHM, HIMAWARI-8
+AVIATION COLOUR CODE: ORANGE
+ERUPTION DETAILS: GROUND REPORT OF VA ERUPTION TO FL130 AT
+15/0237Z
+OBS VA DTG: 15/0252Z
+OBS VA CLD: TOP FL550 N4130 E01415 - N3745 E02145 - N3500 E03015 - N3400 E02930 -
+N3845 E01415 - N4030 E01230 - N4130 W01415 MOV NS 5KT
+FCST VA CLD +6 HR: 15/0852Z NO VA EXP
+FCST VA CLD +12 HR: 15/1452Z NO VA EXP
+FCST VA CLD +18 HR: 15/2052Z NO VA EXP
+RMK: CVGHM VONA REPORTS ERUPTION TO FL130 MOVING TO WEST AT
+15/0237Z, HOWEVER VA CANNOT BE IDENTIFIED ON SATELLITE
+IMAGERY DUE TO MET CLOUD IN AREA. ADVISORY WILL BE UPDATED
+IF NEW INFORMATION IS RECEIVED.
+NXT ADVISORY: NO FURTHER ADVISORIES
+"""
+
     decoder = vD.Decoder()
     result = decoder(test)
     assert 'err_msg' in result
@@ -234,7 +271,7 @@ STATUS: EXER
 DTG: 20191231/1315Z
 VAAC: TOULOUSE
 VOLCANO: CAMPI FLEGREI 211010
-PSN: N4049 E01408
+PSN: N40 E014
 AREA: ITALY
 SUMMIT ELEV: 458M
 ADVISORY NR: 2019/1
@@ -286,7 +323,7 @@ NXT ADVISORY: NO FURTHER ADVISORIES="""
             name = element[0][0]
             assert name.text == 'CAMPI FLEGREI 211010'
             position = element.find('%spos' % find_gml)
-            assert position.text == '40.817 14.133'
+            assert position.text == '40.000 14.000'
             edate = element.find('.//*{http://def.wmo.int/metce/2013}eruptionDate')
             assert edate.text == '2019-12-31T12:41:00Z'
         elif cnt == 3:
@@ -407,7 +444,7 @@ INFO SOURCE: HIMAWARI-8 JMA
 AVIATION COLOUR CODE: UNKNOWN
 ERUPTION DETAILS: ACTIVITY CONT. VA AT 20200511/1800Z FL050 EXTD N
 OBS VA DTG: 11/1750Z
-OBS VA CLD: VA NOT IDENTIFIABLE FM SATELLITE DATA WIND FL050 VRB10MPS
+OBS VA CLD: VA NOT IDENTIFIABLE FM SATELLITE DATA WIND SFC/FL050 VRB10MPS
 FCST VA CLD +6 HR: NOT AVBL
 FCST VA CLD +12 HR: NOT AVBL
 FCST VA CLD +18 HR: NOT AVBL
@@ -468,8 +505,8 @@ NXT ADVISORY: NO FURTHER ADVISORIES="""
             assert layer[3].tag == '%slowerLimitReference' % aixm
             assert layer[0].text == '050'
             assert layer[1].text == 'STD'
-            assert layer[2].text == '050'
-            assert layer[3].text == 'STD'
+            assert layer[2].text == 'GND'
+            assert layer[3].text == 'SFC'
             assert wind[0][1].tag == '%swindSpeed' % iwxxm
             assert wind[0][1].text == '10'
             assert wind[0][1].get('uom') == 'm/s'
@@ -626,7 +663,7 @@ ADVISORY NR: 2020/635
 
 INFO SOURCE: GOES-E. GFS. WEBCAM.
 
-AVIATION COLOUR CODE: NOT GIVEN
+AVIATION COLOUR CODE: PURPLE
 
 ERUPTION DETAILS: CONTINUOUS EMISSION
 
@@ -651,12 +688,16 @@ EST FL240. THERMAL WEBCAM SHOWS A CONTINUOUS
 EMISSION WITH INTERMITTENT PUFFS...SMN
 
 NXT ADVISORY: WILL BE ISSUED BY 20200529/1215Z="""
-
+    colorCode = first_siblings.index('colourCode')
+    first_siblings.pop(colorCode)
     bulletin = encoder.encode(test)
     result = bulletin.pop()
+
     assert len(result) == len(first_siblings)
     for num, child in enumerate(result):
         assert child.tag == first_siblings[num]
+
+    first_siblings.insert(colorCode, 'colorCode')
 
     assert result.get('permissibleUsage') == 'OPERATIONAL'
     assert result.get('permissibleUsageReason') is None
@@ -686,11 +727,11 @@ NXT ADVISORY: WILL BE ISSUED BY 20200529/1215Z="""
             assert element.text == '2020/635'
         elif cnt == 6:
             assert element.text == 'GOES-E. GFS. WEBCAM.'
-        elif cnt == 7:
+        elif cnt == -7:
             assert element.get('nilReason') == codes[des.NIL][des.WTHLD][0]
-        elif cnt == 8:
+        elif cnt == 7:
             assert element.text == 'CONTINUOUS EMISSION'
-        elif cnt == 9:
+        elif cnt == 8:
 
             assert element[0].get('status') == 'IDENTIFIABLE'
             assert element[0].get('isEstimated') == 'false'
@@ -717,7 +758,7 @@ NXT ADVISORY: WILL BE ISSUED BY 20200529/1215Z="""
                     assert ashCloud[0][2].text == '20'
                     assert ashCloud[0][2].get('uom') == '[kn_i]'
 
-        elif 9 < cnt < 13:
+        elif 8 < cnt < 12:
             timePosition = element.find('%stimePosition' % find_gml)
             assert element[0].get('status') == 'PROVIDED'
             ashCloud = element.find('%sashCloud' % find_iwxxm)
@@ -731,16 +772,16 @@ NXT ADVISORY: WILL BE ISSUED BY 20200529/1215Z="""
             assert volume[2].text == 'GND'
             assert volume[3].text == 'SFC'
 
-            if cnt == 10:
+            if cnt == 9:
                 assert timePosition.text == '2020-05-29T11:00:00Z'
-            elif cnt == 11:
+            elif cnt == 10:
                 assert timePosition.text == '2020-05-29T17:00:00Z'
-            elif cnt == 12:
+            elif cnt == 11:
                 assert timePosition.text == '2020-05-29T23:00:00Z'
 
-        elif cnt == 13:
+        elif cnt == 12:
             assert len(element.text) > 80
-        elif cnt == 14:
+        elif cnt == 13:
             timePosition = element.find('%stimePosition' % find_gml)
             assert timePosition.text == '2020-05-29T12:15:00Z'
             assert timePosition.get('indeterminatePosition') == 'before'
@@ -750,6 +791,7 @@ if __name__ == '__main__':
 
     test_vaaFailureModes()
     test_vaaNoWinds()
+    test_vaaWndDirection()
     test_vaaTest()
     test_vaaExercise()
     test_vaaNormal()
