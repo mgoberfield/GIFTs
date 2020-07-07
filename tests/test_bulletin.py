@@ -1,9 +1,11 @@
+from __future__ import print_function
 import os
 import pytest
 
 import gifts.common.bulletin as bulletin
 from gifts.TAF import Encoder as TE
 from gifts.METAR import Encoder as ME
+
 
 database = {'SBAF': 'AFONSOS ARPT MI|||-22.87 -43.37'}
 
@@ -117,6 +119,15 @@ TAF SBAF 101800Z NIL=
     #
     collective2.write(filename)
     os.unlink(filename)
+    #
+    # Pass in a directory
+    collective2.write('/tmp')
+    os.unlink(filename)
+    #
+    # Print is normally to stdout, but for testing, route output to /dev/null
+    _fh = open(os.devnull, 'w')
+    print(collective2, file=_fh)
+    _fh.close()
 
 
 def test_operations():

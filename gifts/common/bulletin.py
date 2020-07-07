@@ -175,6 +175,7 @@ class Bulletin(object):
         obj - if none provided, XML is written to current working directory, or
               write() method, or
               file object, or
+              character string as directory, or
               character string as a filename.
 
         File extension indicated on <bulletinIdentifer> element's value determines
@@ -202,6 +203,8 @@ class Bulletin(object):
 
             if obj is None:
                 obj = self._bulletinID
+            elif os.path.isdir(obj):
+                obj = os.path.join(obj, self._bulletinID)
             else:
                 if os.path.basename(obj) != self._bulletinID:
                     raise XMLError('Internal ID and external file names do not agree.')

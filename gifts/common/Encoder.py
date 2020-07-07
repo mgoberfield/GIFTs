@@ -45,7 +45,7 @@ class Encoder(object):
                         decodedTAC['translatedBulletinReceptionTime'] = decodedTAC['translationTime']
 
                 elif 'err_msg' in decodedTAC:
-                    if self.T1T2[1] in 'APT':
+                    if self.T1T2 == 'L' or self.T1T2 == 'LT':
                         try:
                             self._Logger.warning('Will not create IWXXM document for %s' % decodedTAC['ident']['str'])
                         except KeyError:

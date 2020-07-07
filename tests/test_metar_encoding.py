@@ -27,8 +27,8 @@ unknown = codes[des.NIL][des.UNKNWN]
 withheld = codes[des.NIL][des.WTHLD]
 
 database = {
-    'BIAR': 'AKUREYRI|AEY||65.67 -18.07 27',
-    'USRR': 'SURGUT|SGC||61.33 73.42  44',
+    'BIAR': 'AKUREYRI|AEY|AKI|65.67 -18.07 27',
+    'USRR': 'SURGUT|SGC|SURGUT|61.33 73.42  44',
     'USTR': 'TYUMEN/ROSCHINO|TJM||57.17 65.31  115'}
 
 encoder = ME.Encoder(database)
@@ -87,6 +87,17 @@ METAR USTR 311938Z 36025MPS REMARKS LIKE THIS ONE DO NOT BELONG IN ANNEX 3 METAR
     assert result.get('translationFailedTAC') is not None
     assert len(result) == 4
 
+    des.TRANSLATOR = False
+
+    text = """
+524
+SPXX99 XXXX 311900
+SPECI USTR 311938Z 36025MPS REMARKS LIKE THIS ONE DO NOT BELONG IN ANNEX 3 METAR/SPECI=
+                           ^--PARSER HALTS HERE"""
+
+    encoder.encode(text)
+    des.TRANSLATOR = True
+
 
 def test_metarNil():
 
@@ -109,7 +120,7 @@ def test_auto():
 METAR BIAR 290000Z 33003KT 280V010 3000 VCSH BKN080 OVC120 04/M00 Q1023=
 METAR BIAR 290000Z AUTO 33003KT 280V010 3000 VCSH BKN080 04/M00 Q1023="""
 
-    bulletin = encoder.encode(test)
+    bulletin = encoder.encode(test, time.strftime('%Y-%m-%dT%H:%M:%SZ'))
     result = bulletin.pop()
     assert result.get('translationFailedTAC') is None
     assert result.get('automatedStation') == 'false'
@@ -148,6 +159,7 @@ def test_aerodrome():
 
     result['ident']['name'] = fullname
     result['ident']['iataID'] = iataID
+    result['ident']['alternate'] = alternateID
     result['ident']['position'] = position
     result['translatedBulletinReceptionTime'] = translatedBulletinReceptionTime
     result['translatedBulletinID'] = translatedBulletinID
@@ -157,6 +169,7 @@ def test_aerodrome():
 
     assert tree.find('%slocationIndicatorICAO' % aixm).text == result['ident']['str']
     assert tree.find('%sdesignatorIATA' % aixm).text == result['ident']['iataID']
+    assert tree.find('%sdesignator' % aixm).text == result['ident']['alternate']
     assert tree.find('%sname' % aixm).text == result['ident']['name']
     assert tree.find('.//*{http://www.opengis.net/gml/3.2}pos').text == ' '.join(result['ident']['position'].split()[:2])  # noqa: E501
     assert tree.find('%selevation' % aixm).text == result['ident']['position'].split()[2]
