@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import argparse
-import platform
 import sys
 import os
 import checkGMLReferences
@@ -53,19 +52,12 @@ def validate_xml_files(cmdargs):
 
     # replace ${INSTALL_DIR}, ${IWXXM_VERSION}, and ${IWXXM_VERSION_DIR} with appropriate values in the catalog.xml file
     if not os.path.exists(thisCatalogFile):
-        if platform.system() == 'Windows':
-            platformCWD = 'file%c:%s' % (os.path.sep, cwd)
-            platformSchemaDirectory = 'file%c:%s' % (os.path.sep, schemaDirectory)
-        else:
-            platformCWD = cwd
-            platformSchemaDirectory = schemaDirectory
-    
         with open(catalogTemplate) as templateFhandle:
             with open(thisCatalogFile, 'w') as catalogFhandle:
                 catalogText = templateFhandle.read()
-                catalogText = catalogText.replace("${INSTALL_DIR}", platformCWD)
+                catalogText = catalogText.replace("${INSTALL_DIR}", cwd)
                 catalogText = catalogText.replace("${IWXXM_VERSION}", cmdargs.version)
-                catalogText = catalogText.replace("${IWXXM_VERSION_DIR}", platformSchemaDirectory)
+                catalogText = catalogText.replace("${IWXXM_VERSION_DIR}", schemaDirectory)
                 catalogFhandle.write(catalogText)
     else:
         print("Catalog file version %s already exists in directory. Using it for validation." % cmdargs.version)
