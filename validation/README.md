@@ -1,4 +1,4 @@
-# Introduction
+﻿# Introduction
 
 This software package can be used to check IWXXM documents for correctly-formed XML, schema and schematron
 ('business rules') validation. The Java code, CRUX, performs the validation steps. Information on CRUX can
@@ -156,7 +156,7 @@ need access to the Internet when running this script the first time, and when sw
 --fetch flag
 ----------------
 If circumstances require it, you can force the script to download and overwrite the local cache of the 
-IWXXM schemas and schematron files with the '-f' or '--force' flag. (Default: do not fetch)
+IWXXM schemas and schematron files with the '-f' or '--fetch' flag. (Default: do not fetch)
 
 
 --keep flag
@@ -196,27 +196,23 @@ is sufficient.
 
 Notes:
 ------
-This software is not meant to be a subtitute for more sophisticated XML-aware applications. This is a
-basic, relatively "unfriendly" tool if you are new to XML documents and the technology associated with
-them. It _can_ help you find errors in your documents but sometimes the error messages from CRUX are
-cryptic. We make no apologies for that.
+This software is not meant to be a subtitute for more sophisticated XML-aware applications. This is a basic, relatively "unfriendly" tool if you are new to XML documents and the technology associated with them. It _can_ help you find errors in your documents but sometimes the error messages from CRUX are cryptic. We make no apologies for that.
 
-This script can be used to quickly validate IWXXM messages before dissemination in an operational
-environment.
+When using tool the first time on Windows machines, the user must have the ability to create a symbolic link to a file as it's created as part of downloading files from the WMO Code Registry.  After the initial downloading of files and setup, this particular privilege is no longer needed on subsequent invocations of `iwxxmValidator.py`.
 
-There are numerous examples of validated IWXXM documents on the Internet.  The canoncial IWXXM source has
-a few examples in the 'examples' folder under http://schemas.wmo.int/iwxxm/<v>/examples.
+This script can be used to quickly validate IWXXM messages before dissemination in an operational environment.
+
+There are numerous examples of validated IWXXM documents on the Internet.  The canoncial IWXXM source has a few instances in the http://schemas.wmo.int/iwxxm/*version*/examples folders.
 
 Another repository of examples is the WMO-IM GitHub site: http://github.com/wmo-im/iwxxm-translation
 
-However, after genuine effort on your part, you cannot figure out the problem with your XML document,
-please raise your issue to the CBS TT-AvXML google group for assistance:
+However, after genuine effort on your part, you cannot figure out the problem with your XML document, please raise your issue to the CBS TT-AvXML google group for assistance:
 
 https://groups.google.com/a/wmo.int/forum/#!forum/cbs-tt-avxml
 
 There are people on that forum who have probably seen your issue before and can help.
 
-An 'ignoredURLs.txt' file is provided for the case when your IWXXM documents have <extension> blocks that
+An 'ignoredURLs.txt' file is provided for the case when your IWXXM documents have `<extension>` blocks that
 contain references to URLs that are not part of the WMO Code Registry. By adding the URLs in this file,
 this will suppress warning messages from the checkGMLReferences routine.
 
