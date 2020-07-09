@@ -15,6 +15,9 @@ import argparse
 
 
 def run(cmdargs):
+
+    if sys.version_info.major == 2 and os.name == "nt":
+        os.symlink = symlink_ms
     #
     # Check for presence of desired version of schemas and schematron directories and files
     fetchSchemaFiles = False
@@ -105,7 +108,11 @@ def run(cmdargs):
     if 'http://codes.wmo.int/49-2/AerodromePresentOrForecastWeather' in typeToCodeList.values():
         srcfile = parseLocalCodeListFile('http://codes.wmo.int/49-2/AerodromePresentOrForecastWeather')
         deslink = parseLocalCodeListFile('http://codes.wmo.int/306/4678')
-        os.symlink(os.path.join(schematronPath, srcfile), os.path.join(schematronPath, deslink))
+        if os.path.isfile(os.path.join(schematronPath, deslink)) == False:
+            try:
+                os.symlink(os.path.join(schematronPath, srcfile), os.path.join(schematronPath, deslink))
+            except Exception as msg:
+                print('Unable to create symbolic link. Reason: %s' % msg)
 
 
 def fetchLocalCopy(source, suffix, destinationDirectory):
@@ -146,8 +153,20 @@ def download_codelist(codeListPath, schematronPath):
 
 
 def parseLocalCodeListFile(codeListHttpPath):
+
     filename = codeListHttpPath.replace('http://', '').replace('/', '-')  # remove slashes and 'http://'
     return '%s.rdf' % filename
+
+
+def symlink_ms(source, link_name):
+
+    import ctypes
+    csl = ctypes.windll.kernel32.CreateSymbolicLinkW
+    csl.argtypes = (ctypes.c_wchar_p, ctypes.c_wchar_p, ctypes.c_uint32)
+    csl.restype = ctypes.c_ubyte
+    flags = 1 if os.path.isdir(source) else 0
+    if csl(link_name, source.replace('/', '\\'), flags) == 0:
+        raise ctypes.WinError()
 
 
 if __name__ == '__main__':
