@@ -65,7 +65,7 @@ class Decoder(tpg.Parser):
     VAA -> 'VA ADVISORY' (Test|Exercise)? DTG Centre VName VLoc Region Summit AdvNum Source ColorCode? Details ObsDTG ObsClds FcstClds+ Rmk NextDTG ;  # noqa: E501
 
     Source -> (Source1|Source2) ;
-    ObsClds -> oPreamble ((Volume (Box? (LatLon|'-')+) Movement?)+|VaNotId) ;
+    ObsClds -> oPreamble (VaNotId|(Volume (Box? (LatLon|'-')+) Movement)+) ;
     FcstClds -> fPreamble DayHour? (Volume? (NoAshExp|NotAvbl|NotPrvd|(Box? (LatLon|'-')+)))* ;
     Volume -> (Sfc|MidLyr|Top)  ;
 
