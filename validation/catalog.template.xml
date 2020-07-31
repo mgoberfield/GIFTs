@@ -12,9 +12,7 @@
   <rewriteSystem systemIdStartString="http://schemas.opengis.net" rewritePrefix="${INSTALL_DIR}/externalSchemas/schemas.opengis.net"/>
 
   <!-- AIXM 5 -->
-  <rewriteSystem systemIdStartString="http://www.aixm.aero/gallery/content/public/schema/5.1_profiles/AIXM_WX/5.1a" rewritePrefix="${INSTALL_DIR}/externalSchemas/aero/aixm/5.1_profiles/AIXM_WX/5.1a"/>
-  <rewriteSystem systemIdStartString="http://www.aixm.aero/schema/5.1.1_profiles/AIXM_WX/5.1.1a" rewritePrefix="${INSTALL_DIR}/externalSchemas/aero/aixm/5.1.1_profiles/AIXM_WX/5.1.1a"/>
-  <rewriteSystem systemIdStartString="http://www.aixm.aero/schema/5.1.1_profiles/AIXM_WX/5.1.1b" rewritePrefix="${INSTALL_DIR}/externalSchemas/aero/aixm/5.1.1_profiles/AIXM_WX/5.1.1b"/>
+  <rewriteSystem systemIdStartString="http://www.aixm.aero/schema" rewritePrefix="${INSTALL_DIR}/externalSchemas/aero/aixm"/>
 
   <!-- W3C -->
   <rewriteSystem systemIdStartString="http://www.w3.org" rewritePrefix="${INSTALL_DIR}/externalSchemas/org/w3c"/>
