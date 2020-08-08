@@ -118,15 +118,19 @@ class Decoder(tpg.Parser):
                 else:
                     err_msg = 'Unidentified group '
 
+                tacLines = tca.split('\n')
+                debugString = '\n%%s\n%%%dc\n%%s' % self.lexer.cur_token.end_column
+                errorInTAC = debugString % ('\n'.join(tacLines[:self.lexer.cur_token.end_line]), '^',
+                                            '\n'.join(tacLines[self.lexer.cur_token.end_line:]))
+                self._Logger.info('%s\n%s' % (errorInTAC, err_msg))
+
                 err_msg += 'at line %d column %d.' % (self.lexer.cur_token.end_line, self.lexer.cur_token.end_column)
                 self.tca['err_msg'] = err_msg
-                self._Logger.info('%s\n%s' % (tca, err_msg))
-
-            return self.tca
 
         except Exception:
             self._Logger.exception(tca)
-            return self.tca
+
+        return self.finish()
 
     def _is_a_test(self):
         return 'status' in self.tca and self.tca['status'] == 'TEST'

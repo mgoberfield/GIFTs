@@ -161,7 +161,7 @@ class Decoder(tpg.Parser):
                 else:
                     err_msg = 'Unidentified group '
 
-                tacLines = tac.split('\n')
+                tacLines = vaa.split('\n')
                 debugString = '\n%%s\n%%%dc\n%%s' % self.lexer.cur_token.end_column
                 errorInTAC = debugString % ('\n'.join(tacLines[:self.lexer.cur_token.end_line]), '^',
                                             '\n'.join(tacLines[self.lexer.cur_token.end_line:]))
@@ -173,7 +173,7 @@ class Decoder(tpg.Parser):
         except MissingAirSpaceWinds as msg:
 
             if not self._is_a_test():
-                tacLines = tac.split('\n')
+                tacLines = vaa.split('\n')
                 debugString = '\n%%s\n%%%dc\n%%s' % msg.column
                 errorInTAC = debugString % ('\n'.join(tacLines[:msg.line]), '^',
                                             '\n'.join(tacLines[msg.line:]))
@@ -183,7 +183,7 @@ class Decoder(tpg.Parser):
         except Exception:
             self._Logger.exception(vaa)
 
-        return self.vaa
+        return self.finish()
 
     def _is_a_test(self):
         try:
