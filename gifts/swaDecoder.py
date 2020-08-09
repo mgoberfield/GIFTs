@@ -158,10 +158,9 @@ class Decoder(tpg.Parser):
                 err_msg += 'at line %d column %d.' % (self.lexer.cur_token.end_line, self.lexer.cur_token.end_column)
                 self.swa['err_msg'] = err_msg
 
-
         except Exception:
             self._Logger.exception(swa)
-        
+
         return self.finish()
 
     def _is_a_test(self):

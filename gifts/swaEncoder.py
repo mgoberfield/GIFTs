@@ -225,7 +225,10 @@ class Encoder:
 
             for band in regions:
                 indent4 = ET.SubElement(indent3, 'locationIndicator')
-                indent4.set('xlink:href', self.codes[des.SWX_LOCATION][band][0])
+                try:
+                    indent4.set('xlink:href', self.codes[des.SWX_LOCATION][band][0])
+                except KeyError:
+                    indent4.set('xlink:href', self.codes[des.NIL][des.NA][0])
 
     def airspaceVolume(self, parent, token, fltlvls=None):
 
