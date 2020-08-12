@@ -87,7 +87,7 @@ def fix_date(tms):
 
     now = time.time()
     t = time.mktime(tuple(tms))
-    if t > now + 86400.0:       # previous month
+    if t > now + 3*86400.0:       # previous month
         if tms[1] > 1:
             tms[1] -= 1
         else:
