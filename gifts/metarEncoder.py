@@ -590,21 +590,21 @@ class Annex3(Common.Base):
         indent1 = ET.SubElement(indent, 'iwxxm:CloudLayer')
         indent2 = ET.SubElement(indent1, 'iwxxm:amount')
         try:
-            if amount == 'CLR':
-                amount == 'SKC'
-
             uri, title = self.codes[des.CLDAMTS][amount]
             indent2.set('xlink:href', uri)
             if (des.TITLES & des.CloudAmt):
                 indent2.set('xlink:title', title)
 
         except KeyError:
+
             indent2.set('xsi:nil', 'true')
             if self.XMLDocument.get('automatedStation') == 'false':
                 indent2.set('nilReason', self.codes[des.NIL][des.NOOBSV][0])
             else:
                 indent2.set('nilReason', self.codes[des.NIL][des.NOAUTODEC][0])
 
+            if amount == 'CLR':
+                indent2.set('xlink:title', amount)
         try:
             indent2 = ET.SubElement(indent1, 'iwxxm:base')
             indent2.text = str(int(hgt) * 100)
