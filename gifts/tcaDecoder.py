@@ -30,11 +30,13 @@ class Decoder(tpg.Parser):
     token cname: 'TC:\s*([^\n]+)' ;
     token advnum: 'ADVISORY\s+NR:\s*\d{4}/\d{1,4}' ;
     token cloc: 'OBS\s+PSN:\s*(?P<day>\d{1,2})/(?P<hhmm>\d{4})Z\s+(?P<pos>[NS]\d{2,4}\s+[EW]\d{3,5})' ;
+    token cbnil: 'CB:\s*NIL' ;
     token cbcircle: '(\d{2,3})(KM|NM)\s+OF\s+TC\s+CENT(RE|ER)' ;
     token tops: 'TOPS?\s+(?P<cnd>ABV|BLW)?\s*FL(?P<lvl>\d{3})' ;
     token latlon: '(?P<lat>[NS]\d{2,4})\s+(?P<lon>[EW]\d{3,5})' ;
     token cmov1: 'MOV:\s*(?P<dir>[NEWS]{1,3})\s+(?P<spd>\d{1,2})(?P<uom>K(MH|T))' ;
     token cmov2: 'MOV:\s*STNRY?' ;
+    token ichng: 'INTST CHANGE:\s*([^\n]+)' ;
     token cpres: 'C:\s*(\d{3,4})HPA' ;
     token cmaxwnd: 'MAX WIND:\s*(?P<spd>\d{2,3})(?P<uom>MPS|KT)' ;
     token cfpsn: 'FCST PSN\s\+(?P<fhr>\d{1,2})\sHR:\s*(?P<day>\d{1,2})/(?P<hhmm>\d{4})Z\s+(?P<pos>[NS][/\d]{2,4}\s+[EW][/\d]{3,5})' ;  # noqa: E501
@@ -45,10 +47,10 @@ class Decoder(tpg.Parser):
     START/d -> TCA $ d=self.finish() $ ;
 
     TCA -> 'TC ADVISORY' (Test|Exercise)? Body ;
-    Body -> DTG Centre CName AdvNum CLoc (CB1|CB2)* (CMov1|CMov2) CPres CMaxWnd (CFPsn CFWnd){4,} Rmk NextDTG? '.*' ;
+    Body -> DTG Centre CName AdvNum CLoc (CBNIL|CB2|CB3)* (CMov1|CMov2) IChng? CPres CMaxWnd (CFPsn CFWnd){4,} Rmk NextDTG? '.*' ;
 
-    CB1 -> 'CB:\s*WI\s+' CBCircle CBTop ;
-    CB2 -> 'CB:\s*WI\s+' (LatLon|'-'){5,} CBTop ;
+    CB2 -> 'CB:\s*WI\s+' CBCircle CBTop ;
+    CB3 -> 'CB:\s*WI\s+' (LatLon|'-'){5,} CBTop ;
 
     Exercise -> exercise/x $ self.status(x) $ ;
     Test -> test/x $ self.status(x) $ ;
@@ -58,11 +60,13 @@ class Decoder(tpg.Parser):
     CName -> cname/x $ self.cname(x) $ ;
     AdvNum -> advnum/x $ self.advnum(x) $ ;
     CLoc -> cloc/x $ self.cfpsn(x) $ ;
+    CBNIL -> cbnil/x $ self.cbnil() $ ;
     CBCircle -> cbcircle/x $ self.cbcircle(x) $ ;
     LatLon -> latlon/x $ self.latlon(x) $ ;
     CBTop -> tops/x $ self.tops(x) $ ;
     CMov1 -> cmov1/x $ self.cmov(x) $ ;
     CMov2 -> cmov2/x $ self.cmov(x) $ ;
+    IChng -> ichng/x $ self.ichng(x) $ ;
     CPres -> cpres/x $ self.cpres(x) $ ;
     CMaxWnd -> cmaxwnd/x $ self.cmaxwnd(x) $ ;
     CFPsn -> cfpsn/x $ self.cfpsn(x) $ ;
@@ -182,6 +186,10 @@ class Decoder(tpg.Parser):
 
         self.tca['advisoryNumber'] = s.split(':', 1)[1].strip()
 
+    def cbnil(self):
+
+        pass
+
     def cbcircle(self, s):
 
         result = self.lexer.tokens[self.lexer.cur_token.name][0].match(s)
@@ -202,6 +210,10 @@ class Decoder(tpg.Parser):
             self._fcst['movement'] = {'dir': deu.CardinalPtsToDegreesS[result.group('dir')],
                                       'spd': str(int(result.group('spd'))),
                                       'uom': {'KMH': 'km/h', 'KT': '[kn_i]'}.get(result.group('uom'))}
+
+    def ichng(self, s):
+
+        self.tca['intstChange'] = s.split(':', 1)[1].strip()
 
     def cpres(self, s):
 

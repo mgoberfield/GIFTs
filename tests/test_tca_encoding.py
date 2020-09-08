@@ -52,7 +52,7 @@ def test_tcaFailureModes():
 """
     result = decoder(test)
     assert 'err_msg' in result
-
+    des.TRANSLATOR = True
     test = """FKNT23 KNHC 311315
 TC ADVISORY
 TCAC: MIAMI"""
@@ -587,6 +587,43 @@ NXT MSG:                  NO MSG EXP
             assert element.get('nilReason') == codes[des.NIL][des.NA][0]
 
 
+def test_amd79():
+    import gifts.tcaDecoder as tD
+
+    test = """FKNT23 KNHC 011501
+TCANT3
+
+TROPICAL STORM HELENE ICAO ADVISORY NUMBER  01
+NWS NATIONAL HURRICANE CENTER MIAMI FL       AL012018
+1501 UTC FRI MAY 01 2018
+
+TC ADVISORY
+DTG:                      20180501/1501Z
+TCAC:                     KNHC
+TC:                       HELENE
+ADVISORY NR:              2018/01
+OBS PSN:                  01/1430Z N3254 W03618
+CB:                       NIL
+MOV:                      STNR
+INTST CHANGE:             NC
+C:                        0988HPA
+MAX WIND:                 060KT
+FCST PSN +6 HR:           01/2100Z N3438 W03546
+FCST MAX WIND +6 HR:      060KT
+FCST PSN +12 HR:          02/0300Z N3613 W03458
+FCST MAX WIND +12 HR:     060KT
+FCST PSN +18 HR:          02/0900Z N3740 W03355
+FCST MAX WIND +18 HR:     055KT
+FCST PSN +24 HR:          02/1500Z N3858 W03233
+FCST MAX WIND +24 HR:     055KT
+RMK:                      NIL
+NXT MSG:                  20180912/0000Z="""
+
+    decoder = tD.Decoder()
+    result = decoder(test)
+    assert 'err_msg' not in result
+
+
 if __name__ == '__main__':
 
     test_tcaFailureModes()
@@ -596,3 +633,4 @@ if __name__ == '__main__':
     test_tcaMetric()
     test_developing()
     test_dissipation()
+    test_amd79()

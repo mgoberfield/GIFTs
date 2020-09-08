@@ -38,7 +38,7 @@ class Decoder(tpg.Parser):
     token vname: 'VOLCANO:\s*(\w.*)' ;
     token vloc: 'PSN:\s*(([NS]\d{2,4}\s+[EW]\d{3,5})|UNKNOWN)' ;
     token region: 'AREA:\s*(\w.*)' ;
-    token summit: 'SUMMIT ELEV:\s*((?P<elevation>\d{1,5})\s?(?P<uom>M|FT)).*' ;
+    token summit: 'SUMMIT ELEV:\s*(SFC|UNKNOWN|((?P<elevation>\d{1,5})\s?(?P<uom>M|FT))).*' ;
     token advnum: 'ADVISORY NR:\s*(\d{4}/\d{1,4})' ;
     token source1: 'INFO SOURCE:\s*([\S\s]+)(?=AVIATION COLOU?R CODE:)' ;
     token source2: 'INFO SOURCE:\s*([\S\s]+)(?=ERUPTION DETAILS:)' ;
@@ -344,7 +344,7 @@ class Decoder(tpg.Parser):
     def summit(self, s):
 
         result = self.lexer.tokens[self.lexer.cur_token.name][0].match(s)
-        self.vaa['summit'] = result.groupdict()
+        self.vaa['summit'] = result.groupdict(s.split(':', 1)[1].strip())
         self.vaa['summit']['uom'] = {'FT': '[ft_i]'}.get(self.vaa['summit']['uom'], 'm')
 
     def advnum(self, s):

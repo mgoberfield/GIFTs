@@ -113,11 +113,20 @@ class Encoder:
         self.volcano(self.XMLDocument)
         #
         child = ET.SubElement(self.XMLDocument, 'stateOrRegion')
-        child.text = self.decodedTAC['region']
+        if 'UNKNOWN' not in self.decodedTAC['region']:
+            child.text = self.decodedTAC['region']
+        else:
+            child.set('nilReason', self.codes[des.NIL][des.UNKNWN][0])
 
         child = ET.SubElement(self.XMLDocument, 'summitElevation')
-        child.text = self.decodedTAC['summit']['elevation']
-        child.set('uom', self.decodedTAC['summit']['uom'])
+        if self.decodedTAC['summit']['elevation'].isdigit():
+            child.text = self.decodedTAC['summit']['elevation']
+            child.set('uom', self.decodedTAC['summit']['uom'])
+
+        elif 'SFC' in self.decodedTAC['summit']['elevation']:
+            child.set('nilReason', self.codes[des.NIL][des.NA][0])
+        else:
+            child.set('nilReason', self.codes[des.NIL][des.UNKNWN][0])
 
         child = ET.SubElement(self.XMLDocument, 'advisoryNumber')
         child.text = self.decodedTAC['advisoryNumber']
