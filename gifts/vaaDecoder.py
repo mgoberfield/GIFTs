@@ -505,14 +505,13 @@ class Decoder(tpg.Parser):
 
     def noash(self):
 
-        try:
-            self._cloud['nil'] = self.lexer.cur_token.name
-        except AttributeError:
-            self._cloud = dict(nil=self.lexer.cur_token.name)
+        if len(self.vaa['clouds'][self._fhr]['cldLyrs']) == 0:
+            self.vaa['clouds'][self._fhr]['cldLyrs'].append(dict(nil=self.lexer.cur_token.name))
 
-        self.postPolygon(self._cloud)
-        self.vaa['clouds'][self._fhr]['cldLyrs'].append(self._cloud.copy())
-        del self._cloud
+        try:
+            del self._cloud
+        except AttributeError:
+            pass
 
     def rmk(self, s):
 
