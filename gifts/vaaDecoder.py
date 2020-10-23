@@ -117,7 +117,7 @@ class Decoder(tpg.Parser):
         self.header = re.compile(r'.*(?=VA ADVISORY)', re.DOTALL)
         self._reWinds = re.compile(r'(WINDS?)?\s+(SFC|FL(?P<bottom>\d{3}))(/((FL)?(?P<top>\d{3})))?\s+(?P<dir>VRB|\d{3})/?(?P<spd>\d{1,3})(-\d{2,3})?(?P<uom>MPS|KT)')  # noqa: E501
 
-        self._detail_date = re.compile(r'((?P<date>\d{2,8})/)?(?P<time>\d{4})')
+        self._detail_date = re.compile(r'[\d/]{4,13}Z')
 
         self._Logger = logging.getLogger(__name__)
         return super(Decoder, self).__init__()
@@ -373,9 +373,12 @@ class Decoder(tpg.Parser):
         #
         # Eruption time found.
         tms = self.vaa['issueTime']['tms'][:]
-        eruptDate = result.groupdict('')
-        ymd = eruptDate['date']
-        hhmm = eruptDate['time']
+        eruptDate = result.group(0)
+        try:
+            ymd, hhmm = eruptDate.split('/')
+        except ValueError:
+            ymd = ''
+            hhmm = eruptDate
 
         if len(ymd) >= 2:
             tms[2] = int(ymd[-2:])
