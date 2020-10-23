@@ -372,7 +372,7 @@ class BoundingBox():
         #
         # longitude ranges
         elif token_name == 'longitudes':
-            self.longitudes = (self._convertToFloat(x) for x in new_item.split('-'))
+            self.longitudes = [self._convertToFloat(x) for x in new_item.split('-')]
 
         elif token_name == 'point':
             self.polygon.append(' '.join([str(self._convertToFloat(x)) for x in new_item.split()]))
