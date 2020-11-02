@@ -850,6 +850,38 @@ NXT ADVISORY: NO FURTHER ADVISORIES
     assert element.get('nilReason') == codes[des.NIL][des.NA][0]
 
 
+def test_resuspendedash():
+
+    test = """FVAU03 ADRM 150252
+VA ADVISORY
+DTG: 20200615/0252Z
+VAAC: DARWIN
+VOLCANO: SEMERU 263300
+PSN: S0806 E11255
+AREA: UNKNOWN
+SUMMIT ELEV: SFC
+ADVISORY NR: 2020/96
+INFO SOURCE: CVGHM, HIMAWARI-8
+AVIATION COLOUR CODE: ORANGE
+ERUPTION DETAILS: NO ERUPTION - RE-SUSPENDED ASH
+OBS VA DTG: 15/0252Z
+OBS VA CLD: VA NOT IDENTIFIABLE FM SATELLITE DATA WIND SFC/FL050 090/10MPS
+FCST VA CLD +6 HR: 15/0852Z NO VA EXP
+FCST VA CLD +12 HR: 15/1452Z NO VA EXP
+FCST VA CLD +18 HR: 15/2052Z NO VA EXP
+RMK: RE-SUSPENDED ASH
+NXT ADVISORY: NO FURTHER ADVISORIES
+"""
+    bulletin = encoder.encode(test)
+    result = bulletin.pop()
+    tree = ET.XML(ET.tostring(result))
+
+    element = tree.find('%sstateOrRegion' % iwxxm)
+    assert element.get('nilReason') == codes[des.NIL][des.UNKNWN][0]
+    element = tree.find('%ssummitElevation' % iwxxm)
+    assert element.get('nilReason') == codes[des.NIL][des.NA][0]
+
+
 if __name__ == '__main__':
 
     test_vaaFailureModes()
@@ -859,3 +891,4 @@ if __name__ == '__main__':
     test_vaaExercise()
     test_vaaNormal()
     test_unknowns()
+    test_resuspendedash()

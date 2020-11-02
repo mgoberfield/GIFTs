@@ -27,8 +27,7 @@ class Annex3(Common.Base):
         self._Logger = logging.getLogger(__name__)
         #
         # Create dictionaries of the following WMO codes
-        neededCodes = [des.CLDAMTS, des.WEATHER, des.RECENTWX, des.CVCTNCLDS, des.SEACNDS, des.RWYDEPST, des.RWYCNTMS,
-                       des.RWYDEPST, des.RWYFRCTN]
+        neededCodes = [des.CLDAMTS, des.WEATHER, des.RECENTWX, des.CVCTNCLDS, des.SEACNDS]
         try:
             self.codes = deu.parseCodeRegistryTables(des.CodesFilePath, neededCodes, des.PreferredLanguageForTitles)
         except AssertionError as msg:
@@ -39,15 +38,13 @@ class Annex3(Common.Base):
         setattr(self, 'vcnty', self.pcp)
 
         self.observedTokenList = ['temps', 'altimeter', 'wind', 'vsby', 'rvr', 'pcp', 'obv', 'vcnty',
-                                  'sky', 'rewx', 'ws', 'seastate', 'rwystate']
+                                  'sky', 'rewx', 'ws', 'seastate']
 
         self.trendTokenList = ['wind', 'pcp', 'obv', 'sky']
 
         self._re_unknwnPcpn = re.compile(r'(?P<mod>[-+]?)(?P<char>(SH|FZ|TS))')
         self._re_cloudLyr = re.compile(r'(VV|FEW|SCT|BKN|OVC|///|CLR|SKC)([/\d]{3})?(CB|TCU|///)?')
         self._TrendForecast = {'TEMPO': 'TEMPORARY_FLUCTUATIONS', 'BECMG': 'BECOMING'}
-        self._RunwayDepositDepths = {'92': '100', '93': '150', '94': '200',
-                                     '95': '250', '96': '300', '97': '350', '98': '400'}
 
     def __call__(self, decodedMetar, tacString):
 
@@ -723,91 +720,6 @@ class Annex3(Common.Base):
 
         except KeyError:
             pass
-
-    def rwystate(self, parent, tokens):
-
-        for token in tokens:
-
-            indent1 = ET.SubElement(parent, 'iwxxm:runwayState')
-            if token['state'] == 'SNOCLO':
-                indent1.set('nilReason', des.NIL_SNOCLO_URL)
-                indent1.set('xsi:nil', 'true')
-                continue
-
-            indent2 = ET.SubElement(indent1, 'iwxxm:AerodromeRunwayState')
-            indent2.set('allRunways', 'false')
-            #
-            # Attributes set first
-            if len(token['runway']) == 0 or token['runway'] == '88':
-                indent2.set('allRunways', 'true')
-
-            if token['runway'] == '99':
-                indent2.set('fromPreviousReport', 'true')
-
-            if token['state'][:4] == 'CLRD':
-                indent2.set('cleared', 'true')
-            #
-            # Runway direction
-            if indent2.get('allRunways') == 'false':
-                indent3 = ET.SubElement(indent2, 'iwxxm:runway')
-                if token['runway'] == '99':
-                    indent3.set('nilReason', self.codes[des.NIL][des.NA][0])
-                else:
-                    self.runwayDirection(indent3, token['runway'])
-            #
-            # Runway deposits
-            if token['state'][0].isdigit():
-                indent3 = ET.SubElement(indent2, 'iwxxm:depositType')
-                uri, title = self.codes[des.RWYDEPST][token['state'][0]]
-                indent3.set('xlink:href', uri)
-                if (des.TITLES & des.RunwayDeposit):
-                    indent3.set('xlink:title', title)
-            #
-            # Runway contaminates
-            if token['state'][1].isdigit():
-                indent3 = ET.SubElement(indent2, 'iwxxm:contamination')
-                try:
-                    uri, title = self.codes[des.RWYCNTMS][token['state'][1]]
-                except KeyError:
-                    uri, title = self.codes[des.RWYCNTMS]['15']
-
-                indent3.set('xlink:href', uri)
-                if (des.TITLES & des.AffectedRunwayCoverage):
-                    indent3.set('xlink:title', title)
-            #
-            # Depth of deposits
-            indent3 = ET.Element('iwxxm:depthOfDeposit')
-            depth = token['state'][2:4]
-            if depth.isdigit():
-                if depth != '99':
-                    indent3.set('uom', 'mm')
-                    indent3.text = self._RunwayDepositDepths.get(depth, depth)
-                else:
-                    indent3.set('uom', 'N/A')
-                    indent3.set('xsi:nil', 'true')
-                    indent3.set('nilReason', self.codes[des.NIL][des.UNKNWN][0])
-
-                indent2.append(indent3)
-
-            elif depth == '//':
-                indent3.set('uom', 'N/A')
-                indent3.set('xsi:nil', 'true')
-                indent3.set('nilReason', self.codes[des.NIL][des.NOOPRSIG][0])
-                indent2.append(indent3)
-            #
-            # Runway friction
-            friction = token['state'][4:6]
-            if friction.isdigit():
-                #
-                # Remove leading zeros
-                friction = str(int(friction))
-                indent3 = ET.SubElement(indent2, 'iwxxm:estimatedSurfaceFrictionOrBrakingAction')
-                uri, ignored = self.codes[des.RWYFRCTN][friction]
-                indent3.set('xlink:href', uri)
-                if (des.TITLES & des.RunwayFriction):
-                    title = des.RunwayFrictionValues.get(friction, 'Friction coefficient: %.2f' %
-                                                         (int(friction) * 0.01))
-                    indent3.set('xlink:title', title)
 
     def runwayDirection(self, parent, rwy):
 

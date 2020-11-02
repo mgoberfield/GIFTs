@@ -47,7 +47,7 @@ class Decoder(tpg.Parser):
     START/d -> TCA $ d=self.finish() $ ;
 
     TCA -> 'TC ADVISORY' (Test|Exercise)? Body ;
-    Body -> DTG Centre CName AdvNum CLoc (CBNIL|CB2|CB3)* (CMov1|CMov2) IChng? CPres CMaxWnd (CFPsn CFWnd){4,} Rmk NextDTG? '.*' ;
+    Body -> DTG Centre CName AdvNum CLoc (CBNIL|CB2|CB3)* (CMov1|CMov2) IChng CPres CMaxWnd (CFPsn CFWnd){4,} Rmk NextDTG? '.*' ;
 
     CB2 -> 'CB:\s*WI\s+' CBCircle CBTop ;
     CB3 -> 'CB:\s*WI\s+' (LatLon|'-'){5,} CBTop ;
@@ -77,11 +77,11 @@ class Decoder(tpg.Parser):
 
     def __init__(self):
 
-        self._tokenInEnglish = {'_tok_1': 'TC ADVISORY line', 'dtg': 'Date/Time Group', 'centre': 'Issuing Centre',
+        self._tokenInEnglish = {'_tok_1': 'TC ADVISORY line', 'dtg': 'Date/Time Group', 'centre': 'Issuing RSMC',
                                 'cname': 'Name of Cyclone', 'vloc': 'Location of Cyclone', 'advnum': 'Advisory Number',
-                                'cloc': 'Cyclone Position', 'cmov': 'Cyclone Movement', 'cpres': 'Central Pressure',
-                                'cmaxwnd': 'Cyclone Maximum Wind Speed', 'cfpsn': 'Forecast Position',
-                                'cfwnd': 'Forecast Maximum Wind Speed', 'rmk': 'Remarks',
+                                'cloc': 'Cyclone Position', 'cmov': 'Cyclone Movement', 'ichng': 'Intensity Change',
+                                'cpres': 'Central Pressure', 'cmaxwnd': 'Cyclone Maximum Wind Speed',
+                                'cfpsn': 'Forecast Position', 'cfwnd': 'Forecast Maximum Wind Speed', 'rmk': 'Remarks',
                                 'nextdtg': 'Next advisory issuance time or NO MSG EXP'}
 
         self.header = re.compile(r'.*(?=TC ADVISORY)', re.DOTALL)
