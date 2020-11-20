@@ -21,9 +21,9 @@ As XML, and creating XML documents, may be unfamiliar technology to those withou
 This software is written entirely in the Python language. Python interpreter version 2.7 or better is required.
 
 ## Installation
-The following instructions assume you are using a computer with a Unix-based operating system. Installing this software on other operating systems may require some adjustments. These instructions install software that decodes the traditional alphanumeric code (TAC) forms of METAR, SPECI, TAF, Space Weather<sup>1</sup>, Tropical Cyclone and Volcanic Ash advisories and encodes them into IWXXM equivalents.
+The following instructions assume you are using a computer with a Unix-based operating system. Installing this software on other operating systems may require some adjustments. These instructions install software that decodes the traditional alphanumeric code (TAC) forms of METAR, SPECI, TAF, Space Weather, Tropical Cyclone and Volcanic Ash advisories and encodes them into IWXXM equivalents.
 
-To install the GIFTs<sup>2</sup> package system-wide, use Python's setuptools package and issue the following commands:
+To install the GIFTs<sup>1</sup> package system-wide, use Python's setuptools package and issue the following commands:
 
 	$ cd /path/to/install/directory
 	$ git clone git@github.com:NOAA-MDL/GIFTs.git
@@ -108,6 +108,4 @@ The decoders were written to follow Annex 3 specifications for the TAC forms. If
 It is important that your IWXXM XML documents 'validate' before dissemination. If they don't, they may be rejected by your consumers. Separate from the GIFT software, MDL has provided a convienent python script that invokes NCAR's CRUX utility along with IWXXM schemas, schematron and supporting data files to perform this crucial step before disseminating your IWXXM products. The software can be found in the `/validation` subdirectory. Please consult the [README](https://github.com/NOAA-MDL/GIFTs/blob/master/validation) file for that utility.  You can use this utility to validate the IWXXM XML files created by the `demo1.py` program. 
 
 -------------------
-<sup>1</sup>Not quite for the Space Weather Advisory.  The installation does not install the required SkyField python package, a package that has lots of dependencies of its own. If a Space Weather Center wants to give this software a try, please contact MDL directly and we will provide instructions to get this installed and running at your site.
-
-<sup>2</sup>Yes, we know the project name is presumptuous.
+<sup>1</sup>Yes, we know the project name is presumptuous.
