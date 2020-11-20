@@ -101,6 +101,8 @@ class simpleGUI(object):
         self.encoders = []
         self.encoders.append((re.compile(r'^S(A|P)[A-Z][A-Z]\d\d\s+[A-Z]{4}\s+\d{6}', re.MULTILINE),
                               gifts.METAR.Encoder(aerodromes)))
+        self.encoders.append((re.compile(r'^FN[A-Z][A-Z]\d\d\s+[A-Z]{4}\s+\d{6}', re.MULTILINE),
+                              gifts.SWA.Encoder()))
         self.encoders.append((re.compile(r'^FT[A-Z][A-Z]\d\d\s+[A-Z]{4}\s+\d{6}', re.MULTILINE),
                               gifts.TAF.Encoder(aerodromes)))
         self.encoders.append((re.compile(r'FK\w\w\d\d\s+[A-Z]{4}\s+\d{6}', re.MULTILINE), gifts.TCA.Encoder()))
@@ -131,6 +133,8 @@ class simpleGUI(object):
                 if icaoID is not None:
                     msg = '%s: SUCCESS' % icaoID.text
                     self.logger.info(msg)
+                else:
+                    self.logger.info('IWXXM Advisory created!')
             #
             # Write the Meteorological Bulletin containing IWXXM documents in the same directory
             bulletin.write()

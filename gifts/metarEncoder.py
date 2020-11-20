@@ -30,7 +30,7 @@ class Annex3(Common.Base):
         neededCodes = [des.CLDAMTS, des.WEATHER, des.RECENTWX, des.CVCTNCLDS, des.SEACNDS]
         try:
             self.codes = deu.parseCodeRegistryTables(des.CodesFilePath, neededCodes, des.PreferredLanguageForTitles)
-        except AssertionError as msg:
+        except AssertionError as msg:  # pragma: no cover
             self._Logger.warning(msg)
         #
         # map several encoder tokens to a single function
@@ -162,12 +162,18 @@ class Annex3(Common.Base):
             except KeyError:
                 #
                 # If this error occurred inside one of the functions, report it
-                if len(traceback.extract_tb(sys.exc_info()[2])) > 1:
-                    self._Logger.error(self.tacString)
+                if len(traceback.extract_tb(sys.exc_info()[2])) > 1:  # pragma: no cover
+                    self._Logger.exception(self.tacString)
+                #
+                # Mandatory elements shall be reported missing
+                elif element in ['temps', 'altimeter', 'wind']:
+                    function(indent1, None)
                 #
                 # If visibility should be reported but isn't...
-                elif 'cavok' not in self.decodedTAC and element == 'rvr':
-                    if 'vrbrvr' not in self.decodedTAC:
+                elif 'cavok' not in self.decodedTAC and element in ['vsby', 'rvr']:
+                    if element == 'vsby':
+                        function(indent1, None)
+                    else:
                         try:
                             token = self.decodedTAC['vsby']
                             if int(deu.checkVisibility(token['value'], token['uom'])) < des.RVR_MaximumDistance:
@@ -279,8 +285,8 @@ class Annex3(Common.Base):
             except KeyError:
                 #
                 # If this error occurred inside one of the functions, report it
-                if len(traceback.extract_tb(sys.exc_info()[2])) > 1:
-                    self._Logger.error(self.tacString)
+                if len(traceback.extract_tb(sys.exc_info()[2])) > 1:  # pragma: no cover
+                    self._Logger.exception(self.tacString)
 
     def temps(self, parent, token):
 

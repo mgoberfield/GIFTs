@@ -12,6 +12,7 @@ TC:                       CRISTOBAL
 ADVISORY NR:              2020/028
 OBS PSN:                  08/1500Z N3230 W09148
 MOV:                      NW 13KT
+INTST CHANGE:             NC
 C:                        0995HPA
 MAX WIND:                 030KT
 FCST PSN +6 HR:           08/2100Z N3341 W09207

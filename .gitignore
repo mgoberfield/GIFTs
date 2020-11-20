@@ -13,7 +13,7 @@ __pycache__
 /.venv/
 /build/
 /dist/
-
+/data/
 # IDEs
 /.idea
 
