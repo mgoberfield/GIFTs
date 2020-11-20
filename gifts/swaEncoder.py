@@ -30,7 +30,7 @@ class Encoder:
         neededCodes = [des.SWX_PHENOMENA, des.SWX_LOCATION]
         try:
             self.codes = deu.parseCodeRegistryTables(des.CodesFilePath, neededCodes, des.PreferredLanguageForTitles)
-        except AssertionError as msg:
+        except AssertionError as msg:  # pragma: no cover
             self._Logger.warning(msg)
 
     def __call__(self, decodedSWA, tac):

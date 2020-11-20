@@ -42,7 +42,7 @@ class Encoder(Common.Base):
         neededCodes = [des.CLDAMTS, des.CVCTNCLDS, des.WEATHER]
         try:
             self.codes = deu.parseCodeRegistryTables(des.CodesFilePath, neededCodes, des.PreferredLanguageForTitles)
-        except AssertionError as msg:
+        except AssertionError as msg:  # pragma: no cover
             self._Logger.warning(msg)
 
         setattr(self, 'obv', self.pcp)

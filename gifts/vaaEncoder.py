@@ -27,7 +27,7 @@ class Encoder:
         neededCodes = [des.COLOUR_CODES]
         try:
             self.codes = deu.parseCodeRegistryTables(des.CodesFilePath, neededCodes, des.PreferredLanguageForTitles)
-        except AssertionError as msg:
+        except AssertionError as msg:  # pragma: no cover
             self._Logger.warning(msg)
 
     def __call__(self, decodedVAA, tac):

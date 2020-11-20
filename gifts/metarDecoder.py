@@ -47,7 +47,7 @@ class Annex3(tpg.Parser):
     token altimeter: '(Q|A)(\d{3,4}|////)' ;
 
     token rewx: 'RE(FZ|SH|TS)?(DZ|RASN|RA|(BL)?SN|SG|GR|GS|SS|DS|FC|VA|PL|UP|//)|RETS' ;
-    token windshear: 'WS\s+(R(WY)?(?P<rwy>\d{2}[RLC]?)|ALL RWY)' ;
+    token windshear: 'WS\s+(R(WY)?(?P<rwy>\d{2}[RLC]?)|ALL\s+RWYS?)' ;
     token seastate: 'W(?P<temp>(M|-)?\d\d|//)/(S|H)(?P<value>[/\d]{1,3})' ;
     token rwystate: 'R(\d{0,2}[LCR]?)/([\d/]{6}|SNOCLO|CLRD[/\d]{0,2})' ;
     token trendtype: 'BECMG|TEMPO' ;
@@ -489,7 +489,7 @@ class Annex3(tpg.Parser):
                                    'seaSurfaceTemperature': seatemp,
                                    stateType: result.group('value')}
 
-    def rwystate(self, s):
+    def rwystate(self, s):  # pragma: no cover
 
         rePattern = self.lexer.tokens[self.lexer.cur_token.name][0]
         result = rePattern.match(s)

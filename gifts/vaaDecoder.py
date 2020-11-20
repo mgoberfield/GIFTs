@@ -111,6 +111,7 @@ class Decoder(tpg.Parser):
                                 'top': 'TOP/FL###', 'midlyr': 'FL###/###', 'sfc': 'SFC/FL###',
                                 'box': 'box dimensions', 'latlon': 'latitude/longitude pair',
                                 'movement': 'ash cloud movement', 'vanotid': 'VA not identified statement',
+                                'notprvd': 'Not Provided statement', 'noashexp': 'No Ash Expected',
                                 'rmk': 'Remarks', 'nextdtg': 'Next VAA issuance time',
                                 '_tok_2': 'dash character (-)', '_tok_3': 'dash character (-)'}
 
@@ -180,7 +181,7 @@ class Decoder(tpg.Parser):
                 self._Logger.info('%s\n%s' % (errorInTAC, msg.msg))
                 self.vaa['err_msg'] = msg.msg
 
-        except Exception:
+        except Exception:  # pragma: no cover
             self._Logger.exception(vaa)
 
         return self.finish()
@@ -250,11 +251,11 @@ class Decoder(tpg.Parser):
 
             tms = self.vaa['issueTime']['tms'][:]
             tms[2] = int(result.group('day'))
-            if tms[2] < self.vaa['issueTime']['tms'][2]:
-                tms[1] += 1
-                if tms[1] > 12:
-                    tms[1] = 1
-                    tms[0] += 1
+            if tms[2] > self.vaa['issueTime']['tms'][2]:
+                tms[1] -= 1
+                if tms[1] == 0:
+                    tms[1] = 12
+                    tms[0] -= 1
 
             hhmm = result.group('time')
             tms[3] = int(hhmm[0:2])
@@ -508,8 +509,11 @@ class Decoder(tpg.Parser):
 
     def noash(self):
 
-        if len(self.vaa['clouds'][self._fhr]['cldLyrs']) == 0:
-            self.vaa['clouds'][self._fhr]['cldLyrs'].append(dict(nil=self.lexer.cur_token.name))
+        try:
+            if len(self.vaa['clouds'][self._fhr]['cldLyrs']) == 0:
+                self.vaa['clouds'][self._fhr]['cldLyrs'].append(dict(nil=self.lexer.cur_token.name))
+        except KeyError:
+            self.vaa['clouds'][self._fhr] = {'cldLyrs': [dict(nil=self.lexer.cur_token.name)]}
 
         try:
             del self._cloud
