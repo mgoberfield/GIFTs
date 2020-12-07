@@ -394,7 +394,7 @@ class Encoder:
     def postContent(self):
 
         indent = ET.SubElement(self.XMLDocument, 'remarks')
-        if 'NIL' in self.decodedTAC['remarks']:
+        if self.decodedTAC['remarks']  == 'NIL':
             indent.set('nilReason', self.codes[des.NIL][des.NA][0])
         else:
             indent.text = self.decodedTAC['remarks']

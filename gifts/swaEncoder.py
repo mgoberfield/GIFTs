@@ -310,11 +310,10 @@ class Encoder:
             return
 
         indent = ET.SubElement(self.XMLDocument, 'remarks')
-        remarks = self.decodedTAC['remarks']
-        if remarks == 'NIL':
+        if self.decodedTAC['remarks'] == 'NIL':
             indent.set('nilReason', self.codes[des.NIL][des.NA][0])
         else:
-            indent.text = remarks
+            indent.text = self.decodedTAC['remarks']
 
         indent = ET.SubElement(self.XMLDocument, 'nextAdvisoryTime')
         try:

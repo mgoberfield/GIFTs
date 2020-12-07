@@ -39,7 +39,6 @@ def PP(tree):
 
 
 codes = deu.parseCodeRegistryTables(des.CodesFilePath, [des.COLOUR_CODES, des.NIL])
-missing = codes[des.NIL][des.MSSG]
 
 des.TRANSLATOR = True
 
@@ -256,7 +255,7 @@ NXT ADVISORY: NO LATER THAN 20191201/0400Z="""
                 assert element[0].get('status') == 'NO_VOLCANIC_ASH_EXPECTED'
                 assert timePosition.text == '2019-12-01T16:00:00Z'
         elif cnt == 13:
-            assert element.get('nilReason') == missing[0]
+            assert element.get('nilReason') == codes[des.NIL][des.NA][0]
         elif cnt == 14:
             timePosition = element.find('%stimePosition' % find_gml)
             assert timePosition.text == '2019-12-01T04:00:00Z'
@@ -336,7 +335,7 @@ NXT ADVISORY: NO FURTHER ADVISORIES="""
         elif cnt == 6:
             assert element.text == 'EXERCISE EXERCISE EXERCISE'
         elif cnt == 7:
-            assert element.get('nilReason') == missing[0]
+            assert element.get('nilReason') == codes[des.NIL][des.MSSG][0]
         elif cnt == 8:
             assert element.text == 'ERUPTION AT 20191231/1241Z EXERCISE EXERCISE EXERCISE'
         elif cnt == 9:
