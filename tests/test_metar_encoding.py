@@ -7,7 +7,8 @@ import gifts.metarEncoder as mE
 import gifts.common.xmlConfig as des
 import gifts.common.xmlUtilities as deu
 
-reqCodes = [des.WEATHER, des.SEACNDS, des.RECENTWX, des.CVCTNCLDS, des.CLDAMTS]
+reqCodes = [des.WEATHER, des.SEACNDS, des.RWYFRCTN, des.RWYCNTMS, des.RWYDEPST, des.RECENTWX, des.CVCTNCLDS,
+            des.CLDAMTS]
 
 codes = deu.parseCodeRegistryTables(des.CodesFilePath, reqCodes)
 
@@ -1106,6 +1107,90 @@ METAR BIAR 290000Z /////KT //// // ////// ///// Q//// W///H//=
     assert wh.get('nilReason') == notObservable[0]
 
 
+def test_runwaystates():
+    #
+    # Runway states depreciated, discontinued Nov 2021. Tests are not exhaustive.
+    #
+    test = """SAXX99 XXXX 151200
+METAR BIAR 290000Z /////KT //// // ////// ///// Q//// R/SNOCLO=
+METAR BIAR 290000Z /////KT //// // ////// ///// Q//// R/CLRD//=
+METAR BIAR 290000Z /////KT //// // ////// ///// Q//// R01///////=
+METAR BIAR 290000Z /////KT //// // ////// ///// Q//// R02/999491=
+METAR BIAR 290000Z /////KT //// // ////// ///// Q//// R88/CLRD//=
+METAR BIAR 290000Z /////KT //// // ////// ///// Q//// R99/CLRD//=
+"""
+    bulletin = encoder.encode(test)
+    assert len(bulletin) == test.count('\n') - 1
+
+    #  METAR BIAR 290000Z /////KT //// // ////// ///// Q//// R/SNOCLO=
+
+    result = bulletin.pop()
+    assert result.get('translationFailedTAC') is None
+
+    tree = ET.XML(ET.tostring(result))
+    assert tree.find('%srunwayState' % iwxxm).get('nilReason') == des.NIL_SNOCLO_URL
+
+    #  METAR BIAR 290000Z /////KT //// // ////// ///// Q//// R/CLRD//=
+
+    result = bulletin.pop()
+    assert result.get('translationFailedTAC') is None
+
+    tree = ET.XML(ET.tostring(result))
+    rs = tree.find('%srunwayState' % iwxxm)
+    assert rs[0].get('allRunways') == 'true'
+    assert rs[0].get('cleared') == 'true'
+
+    #  METAR BIAR 290000Z /////KT //// // ////// ///// Q//// R01///////=
+
+    result = bulletin.pop()
+    assert result.get('translationFailedTAC') is None
+
+    tree = ET.XML(ET.tostring(result))
+    rs = tree.find('%srunwayState' % iwxxm)
+    assert rs[0].get('allRunways') == 'false'
+    assert rs.find('%sdesignator' % aixm).text == '01'
+    assert rs.find('%sdepositType' % iwxxm) is None
+    assert rs.find('%scontamination' % iwxxm) is None
+    assert rs.find('%sdepthOfDeposit' % iwxxm).get('nilReason') == nothingOfOperationalSignificance[0]
+    assert rs.find('%sestimatedSurfaceFrictionOrBrakingAction' % iwxxm) is None
+
+    #  METAR BIAR 290000Z /////KT //// // ////// ///// Q//// R02/999491=
+
+    result = bulletin.pop()
+    assert result.get('translationFailedTAC') is None
+
+    tree = ET.XML(ET.tostring(result))
+    rs = tree.find('%srunwayState' % iwxxm)
+    assert rs[0].get('allRunways') == 'false'
+    assert rs.find('%sdesignator' % aixm).text == '02'
+    assert rs.find('%sdepositType' % iwxxm).get(xhref) == codes[des.RWYDEPST]['9'][0]
+    assert rs.find('%scontamination' % iwxxm).get(xhref) == codes[des.RWYCNTMS]['9'][0]
+    assert rs.find('%sdepthOfDeposit' % iwxxm).text == '200'
+    assert rs.find('%sdepthOfDeposit' % iwxxm).get('uom') == 'mm'
+    friction = rs.find('%sestimatedSurfaceFrictionOrBrakingAction' % iwxxm)
+    assert friction.get(xhref) == codes[des.RWYFRCTN]['91'][0]
+
+    #  METAR BIAR 290000Z /////KT //// // ////// ///// Q//// R88/CLRD//=
+
+    result = bulletin.pop()
+    assert result.get('translationFailedTAC') is None
+
+    tree = ET.XML(ET.tostring(result))
+    rs = tree.find('%srunwayState' % iwxxm)
+    assert rs[0].get('allRunways') == 'true'
+    assert rs[0].get('cleared') == 'true'
+
+    #  METAR BIAR 290000Z /////KT //// // ////// ///// Q//// R99/CLRD//=
+
+    result = bulletin.pop()
+    assert result.get('translationFailedTAC') is None
+
+    tree = ET.XML(ET.tostring(result))
+    rs = tree.find('%srunwayState' % iwxxm)
+    assert rs[0].get('fromPreviousReport') == 'true'
+    assert rs[0].get('cleared') == 'true'
+
+
 def test_trendTiming():
 
     test = """SAXX99 XXXX 151200
@@ -1248,14 +1333,14 @@ METAR BIAR 302351Z /////KT //// ////// ///// Q//// TEMPO FM0000 FC=
 def test_commonRunway():
 
     test = """SAXX99 KXXX 151200
-METAR BIAR 290000Z /////MPS //// R01C/2000 ////// ///// Q//// WS R01C=
+METAR BIAR 290000Z /////MPS //// R01C/2000 ////// ///// Q//// WS R01C R01C/999491=
 """
     bulletin = encoder.encode(test)
     assert len(bulletin) == test.count('\n') - 1
 
     tree = ET.XML(ET.tostring(bulletin.pop()))
     runways = tree.findall('%srunway' % iwxxm)
-    assert len(runways) == 2
+    assert len(runways) == 3
     #
     # First runway shall have the id that is shared with the rest
     runwayID = None
@@ -1310,6 +1395,7 @@ if __name__ == '__main__':
     test_sky_conditions()
     test_windshears()
     test_seastates()
+    test_runwaystates()
     test_trendTiming()
     test_commonRunway()
     test_misc()
