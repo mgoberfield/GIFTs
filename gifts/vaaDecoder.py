@@ -523,11 +523,10 @@ class Decoder(tpg.Parser):
     def rmk(self, s):
 
         self.vaa['remarks'] = ' '.join(s[4:].split())
-    #
-    # Called after new forecast projection, and ash cloud polygon(s)
 
     def postPolygon(self, cloudInfo):
-
+        #
+        # Called after new forecast projection, and ash cloud polygon(s)
         if cloudInfo is None:
             return
 
@@ -554,7 +553,7 @@ class Decoder(tpg.Parser):
                 lat2, lon2 = [float(x) for x in b.split(' ')]
                 #
                 # Find perpendicular to vector
-                v = complex((lon2 - lon1), (lat2 - lat1)) * complex(0.0, 1.0)
+                v = complex((lon2 - lon1), (lat2 - lat1)) * 1j
                 newpolygon.append(deu.computeLatLon(lat1, lon1, math.degrees(cmath.phase(v)), distance, radius))
 
             newpolygon.append(deu.computeLatLon(lat2, lon2, math.degrees(cmath.phase(v)), distance, radius))
@@ -567,7 +566,7 @@ class Decoder(tpg.Parser):
                 lat2, lon2 = [float(x) for x in b.split(' ')]
                 #
                 # Find perpendicular to vector
-                v = complex((lon2 - lon1), (lat2 - lat1)) * complex(0.0, 1.0)
+                v = complex((lon2 - lon1), (lat2 - lat1)) * 1j
                 newpolygon.append(deu.computeLatLon(lat1, lon1, math.degrees(cmath.phase(v)), distance, radius))
 
             newpolygon.append(deu.computeLatLon(lat2, lon2, math.degrees(cmath.phase(v)), distance, radius))
@@ -587,16 +586,6 @@ class Decoder(tpg.Parser):
             try:
                 if not deu.isCCW(fpolygon):
                     cloudInfo['pnts'].reverse()
-                #
-                # Convert any longitudes greater than 180 degrees to negative values (signifying west longitudes)
-                new_pnts = []
-                for pnt in cloudInfo['pnts']:
-                    lat, lon = [float(z) for z in pnt.split(' ')]
-                    if lon > 180:
-                        lon -= 360
-                    new_pnts.append(('%.3f %.3f' % (lat, lon)))
-
-                cloudInfo['pnts'] = new_pnts
 
             except ValueError as msg:
                 self._Logger.info(msg)

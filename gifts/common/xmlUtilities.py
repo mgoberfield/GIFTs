@@ -6,6 +6,7 @@
 # Organization: NOAA/NWS/OSTI/Meteorological Development Laboratory
 # Contact Info: Mark.Oberfield@noaa.gov
 #
+import cmath
 import math
 import os
 import time
@@ -107,29 +108,28 @@ def is_a_number(s):
 
 def getUUID(prefix='uuid.'):
     return '%s%s' % (prefix, uuid.uuid4())
-#
-# Assumes flat earth, "far" from singularities, i.e. the poles, and small distances.
-#
-# Fractional errors are O((distance/radius)^2)
 
 
 def computeLatLon(lat, lon, bearing, distance, radius=3440.):
-
-    dy = float(distance) * math.sin(math.radians(float(bearing)))
-    dx = float(distance) * math.cos(math.radians(float(bearing)))
-
-    nlat = lat + math.degrees(dy / radius)
     #
-    # Modulo for dateline crossing.
-    nlon = (lon % 360.) + math.degrees(dx / (radius * math.cos(math.radians(lat))))
+    # Assumes flat earth, "far" from singularities, i.e. the poles, and small distances.
+    #
+    # Fractional errors are O((distance/radius)^2)
+    z = cmath.rect(distance, math.radians(bearing)) * 1j
+    nlat = lat + math.degrees(z.imag / radius)
+    nlon = lon + math.degrees(-z.real / (radius * math.cos(math.radians(lat))))
+
+    if nlon < -180:
+        nlon += 360
+    elif nlon > 180:
+        nlon -= 360
 
     return '%.3f %.3f' % (nlat, nlon)
-#
-# Returns values (in meters) according to Annex 3 Amd 77
 
 
 def checkVisibility(value, uom='m'):
-
+    #
+    # Returns values (in meters) according to Annex 3 Amd 77
     if isinstance(value, str):
         def returnFunction(x):
             return str(x)
