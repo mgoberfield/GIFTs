@@ -312,6 +312,8 @@ class Encoder:
         indent = ET.SubElement(self.XMLDocument, 'remarks')
         if self.decodedTAC['remarks'] == 'NIL':
             indent.set('nilReason', self.codes[des.NIL][des.NA][0])
+            indent.set('xsi:nil', 'true')
+
         else:
             indent.text = self.decodedTAC['remarks']
 

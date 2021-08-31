@@ -24,9 +24,9 @@ class Encoder(E.Encoder):
 
         super(Encoder, self).__init__()
 
-        self.re_AHL = re.compile(r'FT(?P<aaii>\w\w\d\d)\s+(?P<cccc>\w{4})\s+(?P<yygg>\d{6})(\s+(?P<bbb>[ACR]{2}[A-Z]))?')  # noqa:501
+        self.re_AHL = re.compile(r'F(?P<aaii>(C|T)\w\w\d\d)\s+(?P<cccc>\w{4})\s+(?P<yygg>\d{6})(\s+(?P<bbb>[ACR]{2}[A-Z]))?')  # noqa:501
         self.re_TAC = re.compile(r'^TAF(?:\s+(?:AMD|COR|CC[A-Z]|RTD))?\s+[A-Z]{4}.+?=', (re.MULTILINE | re.DOTALL))
-        self.T1T2 = "LT"
+        self.T1T2 = "L"
 
         self._Logger = logging.getLogger(__name__)
         self.decoder = tafDecoder.Decoder()
