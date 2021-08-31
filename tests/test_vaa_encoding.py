@@ -14,7 +14,7 @@ aixm = '{http://www.aixm.aero/schema/5.1.1}'
 find_aixm = './/*%s' % aixm
 gml = '{http://www.opengis.net/gml/3.2}'
 find_gml = './/*%s' % gml
-iwxxm = '{http://icao.int/iwxxm/3.0}'
+iwxxm = '{%s}' % des.IWXXM_URI
 find_iwxxm = './/*%s' % iwxxm
 xhref = '{http://www.w3.org/1999/xlink}href'
 

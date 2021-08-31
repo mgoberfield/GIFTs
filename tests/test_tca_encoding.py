@@ -14,7 +14,7 @@ aixm = '{http://www.aixm.aero/schema/5.1.1}'
 find_aixm = './/*%s' % aixm
 gml = '{http://www.opengis.net/gml/3.2}'
 find_gml = './/*%s' % gml
-iwxxm = '{http://icao.int/iwxxm/3.0}'
+iwxxm = '{%s}' % des.IWXXM_URI
 find_iwxxm = './/*%s' % iwxxm
 xhref = '{http://www.w3.org/1999/xlink}href'
 xtitle = '{http://www.w3.org/1999/xlink}title'
@@ -173,6 +173,8 @@ NXT MSG:              BFR 20180912/0000Z=
             assert movement.text == '270'
             movement = element.find('%smovementSpeed' % find_iwxxm)
             assert movement.text == '12'
+            intensityChg = element.find('%sintensityChange' % find_iwxxm)
+            assert intensityChg.text == 'INTENSIFY'
             pressure = element.find('%scentralPressure' % find_iwxxm)
             assert pressure.text == '905'
             maxWSpeed = element.find('%smaximumSurfaceWindSpeed' % find_iwxxm)
@@ -337,6 +339,8 @@ NXT MSG:              20180912/0000Z =
             assert movement.text == '270'
             movement = element.find('%smovementSpeed' % find_iwxxm)
             assert movement.text == '20'
+            intensityChg = element.find('%sintensityChange' % find_iwxxm)
+            assert intensityChg.text == 'NO_CHANGE'
             pressure = element.find('%scentralPressure' % find_iwxxm)
             assert pressure.text == '905'
             maxWSpeed = element.find('%smaximumSurfaceWindSpeed' % find_iwxxm)
@@ -448,6 +452,8 @@ NXT MSG:              NO MSG EXP"""
             assert movement.text == '225'
             movement = element.find('%smovementSpeed' % find_iwxxm)
             assert movement.text == '6'
+            intensityChg = element.find('%sintensityChange' % find_iwxxm)
+            assert intensityChg.text == 'WEAKEN'
             pressure = element.find('%scentralPressure' % find_iwxxm)
             assert pressure.text == '999'
             maxWSpeed = element.find('%smaximumSurfaceWindSpeed' % find_iwxxm)
@@ -560,6 +566,8 @@ NXT MSG:                  NO MSG EXP
             assert movement.text == '22.5'
             movement = element.find('%smovementSpeed' % find_iwxxm)
             assert movement.text == '15'
+            intensityChg = element.find('%sintensityChange' % find_iwxxm)
+            assert intensityChg.text == 'WEAKEN'
             pressure = element.find('%scentralPressure' % find_iwxxm)
             assert pressure.text == '1014'
             maxWSpeed = element.find('%smaximumSurfaceWindSpeed' % find_iwxxm)
@@ -583,8 +591,12 @@ NXT MSG:                  NO MSG EXP
                     assert time.text == '2019-07-24T09:00:00Z'
                     assert position is None
                     assert maxWSpeed.text == '25'
+                    position = forecast.find('%stropicalCyclonePosition' % find_iwxxm)
+                    assert position.get('nilReason') == codes[des.NIL][des.NA][0]
                 elif fcnt == 3:
-                    assert forecast.get('nilReason') == codes[des.NIL][des.NOOPRSIG][0]
+                    assert time.text == '2019-07-24T15:00:00Z'
+                    assert position.text == '45.500 -55.083'
+                    assert maxWSpeed.get('nilReason') == codes[des.NIL][des.NOOPRSIG][0]
 
         elif num == 9:
             assert len(element.text) > 0
