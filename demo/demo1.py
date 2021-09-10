@@ -103,7 +103,7 @@ class simpleGUI(object):
                               gifts.METAR.Encoder(aerodromes)))
         self.encoders.append((re.compile(r'^FN[A-Z][A-Z]\d\d\s+[A-Z]{4}\s+\d{6}', re.MULTILINE),
                               gifts.SWA.Encoder()))
-        self.encoders.append((re.compile(r'^FT[A-Z][A-Z]\d\d\s+[A-Z]{4}\s+\d{6}', re.MULTILINE),
+        self.encoders.append((re.compile(r'^F(C|T)[A-Z][A-Z]\d\d\s+[A-Z]{4}\s+\d{6}', re.MULTILINE),
                               gifts.TAF.Encoder(aerodromes)))
         self.encoders.append((re.compile(r'FK\w\w\d\d\s+[A-Z]{4}\s+\d{6}', re.MULTILINE), gifts.TCA.Encoder()))
         self.encoders.append((re.compile(r'FV\w\w\d\d\s+[A-Z]{4}\s+\d{6}', re.MULTILINE), gifts.VAA.Encoder()))

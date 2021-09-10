@@ -33,11 +33,11 @@ TranslationCentreDesignator = ''
 # -----------------------------------------------------------------------------------
 #
 # IWXXM versioning
-_iwxxm = '3.0'
-_release = '3.0'
+_iwxxm = '2021-2'
+_release = '2021-2'
 #
 IWXXM_URI = 'http://icao.int/iwxxm/%s' % _iwxxm
-IWXXM_URL = 'http://schemas.wmo.int/iwxxm/%s/iwxxm.xsd' % _release
+IWXXM_URL = 'https://schemas.wmo.int/iwxxm/%s/iwxxm.xsd' % _release
 #
 # Path to file containing codes obtained from WMO Code Registry in RDF/XML format.
 #

@@ -115,8 +115,10 @@ class Encoder:
         child = ET.SubElement(self.XMLDocument, 'stateOrRegion')
         if 'UNKNOWN' not in self.decodedTAC['region']:
             child.text = self.decodedTAC['region']
+
         else:
             child.set('nilReason', self.codes[des.NIL][des.UNKNWN][0])
+            child.set('xsi:nil', 'true')
 
         child = ET.SubElement(self.XMLDocument, 'summitElevation')
         if self.decodedTAC['summit']['elevation'].isdigit():
@@ -125,8 +127,10 @@ class Encoder:
 
         elif 'SFC' in self.decodedTAC['summit']['elevation']:
             child.set('nilReason', self.codes[des.NIL][des.NA][0])
+            child.set('xsi:nil', 'true')
         else:
             child.set('nilReason', self.codes[des.NIL][des.UNKNWN][0])
+            child.set('xsi:nil', 'true')
 
         child = ET.SubElement(self.XMLDocument, 'advisoryNumber')
         child.text = self.decodedTAC['advisoryNumber']
@@ -138,10 +142,16 @@ class Encoder:
             child = ET.Element('colourCode')
             if 'GIVEN' in self.decodedTAC['colourCode']:
                 child.set('nilReason', self.codes[des.NIL][des.WTHLD][0])
+                child.set('xsi:nil', 'true')
+
             elif self.decodedTAC['colourCode'] == 'UNKNOWN':
                 child.set('nilReason', self.codes[des.NIL][des.UNKNWN][0])
+                child.set('xsi:nil', 'true')
+
             elif self.decodedTAC['colourCode'] == 'NIL':
                 child.set('nilReason', self.codes[des.NIL][des.MSSG][0])
+                child.set('xsi:nil', 'true')
+
             else:
                 child.set('xlink:href', self.codes[des.COLOUR_CODES][self.decodedTAC['colourCode']][0])
 
@@ -153,6 +163,8 @@ class Encoder:
         child = ET.SubElement(self.XMLDocument, 'eruptionDetails')
         if 'UNKNOWN' in self.decodedTAC['details']:
             child.set('nilReason', self.codes[des.NIL][des.UNKNWN][0])
+            child.set('xsi:nil', 'true')
+
         else:
             child.text = self.decodedTAC['details']
 
@@ -202,6 +214,8 @@ class Encoder:
         indent2 = ET.SubElement(indent1, 'position')
         if 'UNKNOWN' in self.decodedTAC['volcanoLocation']:
             indent2.set('nilReason', self.codes[des.NIL][des.UNKNWN][0])
+            indent2.set('xsi:nil', 'true')
+
         else:
             indent3 = ET.SubElement(indent2, 'gml:Point')
             indent3.set('axisLabels', des.axisLabels)
@@ -394,8 +408,10 @@ class Encoder:
     def postContent(self):
 
         indent = ET.SubElement(self.XMLDocument, 'remarks')
-        if self.decodedTAC['remarks']  == 'NIL':
+        if self.decodedTAC['remarks'] == 'NIL':
             indent.set('nilReason', self.codes[des.NIL][des.NA][0])
+            indent.set('xsi:nil', 'true')
+
         else:
             indent.text = self.decodedTAC['remarks']
 

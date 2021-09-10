@@ -9,7 +9,7 @@ import gifts.common.xmlUtilities as deu
 reqCodes = [des.WEATHER, des.CLDAMTS, des.CVCTNCLDS]
 codes = deu.parseCodeRegistryTables(des.CodesFilePath, reqCodes)
 
-iwxxm = '{http://icao.int/iwxxm/3.0}'
+iwxxm = '{%s}' % des.IWXXM_URI
 find_iwxxm = './/*%s' % iwxxm
 xhref = '{http://www.w3.org/1999/xlink}href'
 xtitle = '{http://www.w3.org/1999/xlink}title'

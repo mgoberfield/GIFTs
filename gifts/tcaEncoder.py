@@ -164,21 +164,22 @@ class Encoder:
         if fhr == '0':
             self.doObservedConditions(ET.SubElement(parent, 'observation'), token)
         else:
+
             indent = ET.SubElement(parent, 'forecast')
-            if 'windSpeed' in token:
+            indent1 = ET.SubElement(indent, 'TropicalCycloneForecastConditions')
+            indent1.set('gml:id', deu.getUUID())
+            self.itime(indent1, token['dtg'])
+            self.cyclonePosition(indent1, token)
 
-                indent1 = ET.Element('TropicalCycloneForecastConditions')
-                indent1.set('gml:id', deu.getUUID())
-                self.itime(indent1, token['dtg'])
-                self.cyclonePosition(indent1, token)
-
+            try:
                 indent2 = ET.SubElement(indent1, 'maximumSurfaceWindSpeed')
-                indent2.set('uom', token['windSpeed']['uom'])
                 indent2.text = token['windSpeed']['value']
-                indent.append(indent1)
+                indent2.set('uom', token['windSpeed']['uom'])
 
-            else:
-                indent.set('nilReason', self.codes[des.NIL][des.NOOPRSIG][0])
+            except KeyError:
+                indent2.set('uom', 'N/A')
+                indent2.set('nilReason', self.codes[des.NIL][des.NOOPRSIG][0])
+                indent2.set('xsi:nil', 'true')
 
     def itime(self, parent, dtg):
 
@@ -191,18 +192,19 @@ class Encoder:
     def cyclonePosition(self, parent, token):
 
         indent = ET.SubElement(parent, 'tropicalCyclonePosition')
-        if 'position' in token:
-
-            indent1 = ET.SubElement(indent, 'gml:Point')
-            indent1.set('gml:id', deu.getUUID())
-            indent1.set('axisLabels', des.axisLabels)
-            indent1.set('srsName', des.srsName)
-            indent1.set('srsDimension', des.srsDimension)
-            indent2 = ET.SubElement(indent1, 'gml:pos')
+        indent1 = ET.Element('gml:Point')
+        indent1.set('gml:id', deu.getUUID())
+        indent1.set('axisLabels', des.axisLabels)
+        indent1.set('srsName', des.srsName)
+        indent1.set('srsDimension', des.srsDimension)
+        indent2 = ET.SubElement(indent1, 'gml:pos')
+        try:
             indent2.text = token['position']
+            indent.append(indent1)
 
-        else:
-            indent.set('nilReason', self.codes[des.NIL][des.MSSG][0])
+        except KeyError:
+            indent.set('nilReason', self.codes[des.NIL][des.NA][0])
+            indent.set('xsi:nil', 'true')
 
     def doObservedConditions(self, parent, token):
 
@@ -227,6 +229,9 @@ class Encoder:
             indent1 = ET.SubElement(indent, 'movementSpeed')
             indent1.text = token['movement']['spd']
             indent1.set('uom', token['movement']['uom'])
+
+        indent1 = ET.SubElement(indent, 'intensityChange')
+        indent1.text = {'INTSF': 'INTENSIFY', 'WKN': 'WEAKEN'}.get(self.decodedTAC['intstChange'], 'NO_CHANGE')
 
         indent1 = ET.SubElement(indent, 'centralPressure')
         indent1.text = self.decodedTAC['minimumPressure']['value']
@@ -307,6 +312,8 @@ class Encoder:
         indent = ET.SubElement(self.XMLDocument, 'remarks')
         if self.decodedTAC['remarks'] == 'NIL':
             indent.set('nilReason', self.codes[des.NIL][des.NA][0])
+            indent.set('xsi:nil', 'true')
+
         else:
             indent.text = self.decodedTAC['remarks']
 

@@ -45,11 +45,11 @@ class Encoder(object):
                         decodedTAC['translatedBulletinReceptionTime'] = decodedTAC['translationTime']
 
                 elif 'err_msg' in decodedTAC:
-                    if self.T1T2 == 'L' or self.T1T2 == 'LT':
+                    if self.T1T2 == 'L':
                         try:
                             self._Logger.warning('Will not create IWXXM document for %s' % decodedTAC['ident']['str'])
                         except KeyError:
-                            self._Logger.warning('Bad observation, could not determine ICAO ID: %s' % tac)
+                            self._Logger.warning('Bad observation or TAF: Could not determine ICAO ID: %s' % tac)
                     else:
                         self._Logger.warning('Will not create IWXXM advisory because of a decoding error.')
 
