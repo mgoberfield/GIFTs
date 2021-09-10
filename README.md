@@ -8,18 +8,20 @@ This repository is a scientific product and is not official communication of the
 
 -------------------------------------------------------------------------------
 # Generate IWXXM From TAC
-This repository hosts software provided by the United States National Weather Service's [Meteorological Development Laboratory](https://vlab.ncep.noaa.gov/web/mdl) (MDL) that transforms Annex 3 Traditional Alphanumeric Code (TAC) forms into IWXXM v3.0 format.
+This repository hosts software provided by the United States National Weather Service's [Meteorological Development Laboratory](https://vlab.ncep.noaa.gov/web/mdl) (MDL) that transforms Annex 3 Traditional Alphanumeric Code (TAC) forms into IWXXM format.
 
 The ICAO Meteorological Information Exchange Model (IWXXM) is a format for reporting weather information in eXtensible Markup Language (XML). The IWXXM XML schemas, developed and hosted by the WMO in association with ICAO, are used to encode aviation products described in the Meteorological Service for International Air Navigation, Annex 3 to the Convention on International Civil Aviation.
 
-Version 3.0 of the IWXXM XML schemas encode METAR, SPECI, TAF, SIGMET, AIRMET, Volcanic Ash Advisory, Tropical Cyclone Advisory, and Space Weather Advisory reports.
+The IWXXM XML schemas encode METAR, SPECI, TAF, SIGMET, AIRMET, Volcanic Ash Advisory, Tropical Cyclone Advisory, and Space Weather Advisory reports and Significant Weather (SIGWX).
 
-This repository contains software, written exclusively in the Python language, that transforms the current TAC form of these reports into IWXXM XML documents. The advantage of the Python language is its popularity, rich functionality, and wide availability under many different computer operating systems.
+This repository contains software, written exclusively in the Python language, that transforms the data in the current TAC form of these reports into IWXXM XML documents. The advantage of the Python language is its popularity, rich functionality, and wide availability under many different computer operating systems.
 
 ## Introduction
-IWXXM v3.0 will become a WMO standard on 5 November 2020. Met Watch Offices shall disseminate METAR, SPECI, TAF, AIRMET, SIGMET products and Tropical Cyclone, Volcanic Ash and Space Weather Advisories in IWXXM form on that date.
+IWXXM became a ICAO standard on 5 November 2020. Various Met Watch Offices shall disseminate METAR, SPECI, TAF, AIRMET, SIGMET products and Tropical Cyclone, Volcanic Ash and Space Weather Advisories in IWXXM form after that date.
 
 As XML, and creating XML documents, may be unfamiliar technology to those without an IT background, MDL is providing software to assist those in creating the new XML documents based on IWXXM v3.0 schemas.
+
+It should be understood that the software provided here is a short-term solution as TAC forms of these products will cease to be a standard and no longer disseminated by 2029.
 
 ## Prequisites
 This software is written entirely in the Python language. Python interpreter version 2.7 or better is required.
@@ -90,7 +92,7 @@ The Encoder class requires that the input file contain one WMO AHL line, appropr
     S(A|P)[A-Z][A-Z]\d\d\s+[A-Z]{4}\s+\d{6}(\s+[ACR]{2}[A-Z])? # for METAR/SPECI
     FN\w\w\d\d\s+[A-Z]{4}\s+\d{6}(\s+[ACR]{2}[A-Z])? # Space Weather Advisories
     FK\w\w\d\d\s+[A-Z]{4}\s+\d{6}(\s+[ACR]{2}[A-Z])? # Tropical Cyclone Advisory
-    FT\w\w\d\d\s+[A-Z]{4}\s+\d{6}(\s+[ACR]{2}[A-Z])? # TAF
+    F(C|T)\w\w\d\d\s+[A-Z]{4}\s+\d{6}(\s+[ACR]{2}[A-Z])? # TAF
     FV\w\w\d\d\s+[A-Z]{4}\s+\d{6}(\s+[ACR]{2}[A-Z])? # Volcanic Ash Advisory
 And for capturing the individual TAC forms:
 
