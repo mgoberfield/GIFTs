@@ -17,14 +17,14 @@ The IWXXM XML schemas encode METAR, SPECI, TAF, SIGMET, AIRMET, Volcanic Ash Adv
 This repository contains software, written exclusively in the Python language, that transforms the data in the current TAC form of these reports into IWXXM XML documents. The advantage of the Python language is its popularity, rich functionality, and wide availability under many different computer operating systems.
 
 ## Introduction
-IWXXM became a ICAO standard on 5 November 2020. Various Met Watch Offices shall disseminate METAR, SPECI, TAF, AIRMET, SIGMET products and Tropical Cyclone, Volcanic Ash and Space Weather Advisories in IWXXM form after that date.
+IWXXM became a WMO standard on 5 November 2020. Met Offices shall disseminate METAR, SPECI, TAF, AIRMET, SIGMET products and Tropical Cyclone, Volcanic Ash and Space Weather Advisories in IWXXM form after that date.
 
-As XML, and creating XML documents, may be unfamiliar technology to those without an IT background, MDL is providing software to assist those in creating the new XML documents based on IWXXM v3.0 schemas.
+As XML, and creating XML documents, may be unfamiliar technology to those without an IT background, MDL is providing software to assist those in creating the new XML documents based on IWXXM schemas.
 
 It should be understood that the software provided here is a short-term solution as TAC forms of these products will cease to be a standard and no longer disseminated by 2029.
 
 ## Prequisites
-This software is written entirely in the Python language. Python interpreter version 2.7 or better is required.
+This software is written entirely in the Python language. Python interpreter v3.7 or better is required.
 
 ## Installation
 The following instructions assume you are using a computer with a Unix-based operating system. Installing this software on other operating systems may require some adjustments. These instructions install software that decodes the traditional alphanumeric code (TAC) forms of METAR, SPECI, TAF, Space Weather, Tropical Cyclone and Volcanic Ash advisories and encodes them into IWXXM equivalents.
@@ -108,7 +108,7 @@ The WMO AHL line in the TAC file is crucial in forming the proper filename for t
 If you try to read the resulting XML file, you will see that it has no extraneous whitespace characters in it.  To make the XML file more readable, use the `xmllint --format` command to make the file contents "pretty".
 
 ## Caveats
-The decoders were written to follow Annex 3 specifications for the TAC forms. If your observations or forecast products deviate significantly from Annex 3, then this software will likely refuse to encode the data into IWXXM.  Fortunately, solutions can be readily found, ranging from trivial to challenging (see United States METAR/SPECI [reports](https://nws.weather.gov/schemas/iwxxm-us/3.0/examples/metars)). If there is enough interest or requests about using this software, MDL can provide additional background information on how the software works and how it can be modified to meet your needs.
+The decoders were written to follow Annex 3 specifications for the TAC forms. If your observations or forecast products deviate significantly from Annex 3, then this software will likely refuse to encode the data into IWXXM.  Fortunately, solutions can be readily found, ranging from trivial to challenging (see United States METAR/SPECI [reports](https://nws.weather.gov/schemas/iwxxm-us/3.0/examples/metars)).
 
 # IWXXM Validation
 It is important that your IWXXM XML documents 'validate' before dissemination. If they don't, they may be rejected by your consumers. Separate from the GIFT software, MDL has provided a convienent python script that invokes NCAR's CRUX utility along with IWXXM schemas, schematron and supporting data files to perform this crucial step before disseminating your IWXXM products. The software can be found in the `/validation` subdirectory. Please consult the [README](https://github.com/NOAA-MDL/GIFTs/blob/master/validation) file for that utility.  You can use this utility to validate the IWXXM XML files created by the `demo1.py` program. 

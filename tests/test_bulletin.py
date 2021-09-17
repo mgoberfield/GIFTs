@@ -1,6 +1,7 @@
 from __future__ import print_function
 import os
 import pytest
+import tempfile
 
 import gifts.common.bulletin as bulletin
 from gifts.TAF import Encoder as TE
@@ -111,7 +112,7 @@ TAF SBAF 101800Z NIL=
         collective1.write(os.devnull)
     #
     # Passes now because internal and external names agree
-    filename = '/tmp/%s' % collective2.get_bulletinIdentifier()
+    filename = os.path.join(tempfile.gettempdir(), collective2.get_bulletinIdentifier())
     _fh = open(filename, 'wb')
     collective2.write(_fh)
     _fh.close()
@@ -121,7 +122,7 @@ TAF SBAF 101800Z NIL=
     os.unlink(filename)
     #
     # Pass in a directory
-    collective2.write('/tmp')
+    collective2.write(tempfile.gettempdir())
     os.unlink(filename)
     #
     # Print is normally to stdout, but for testing, route output to /dev/null
