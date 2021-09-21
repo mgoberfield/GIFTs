@@ -115,9 +115,9 @@ def computeLatLon(lat, lon, bearing, distance, radius=3440.):
     # Assumes flat earth, "far" from singularities, i.e. the poles, and small distances.
     #
     # Fractional errors are O((distance/radius)^2)
-    z = cmath.rect(distance, math.radians(bearing)) * 1j
+    z = cmath.rect(distance, math.radians(bearing))
     nlat = lat + math.degrees(z.imag / radius)
-    nlon = lon + math.degrees(-z.real / (radius * math.cos(math.radians(lat))))
+    nlon = lon + math.degrees(z.real / (radius * math.cos(math.radians(lat))))
 
     if nlon < -180:
         nlon += 360
