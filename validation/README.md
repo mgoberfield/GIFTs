@@ -143,13 +143,13 @@ Invoking the script for help with the '-h' or '--help' flag provides the followi
 
 --version flag
 ------------------
-By default, the validation tool checks IWXXM v3.0 documents. If your IWXXM XML documents are based on a 
-different version of IWXXM, provide the appropriate major.minor combination using the '-v' or '--version'
+By default, the validation tool checks IWXXM 3.0 documents. If your IWXXM XML documents are based on a 
+different version of IWXXM, provide the appropriate combination using the '-v' or '--version'
 flag.
 
 The script will check for this version's local copy of the IWXXM schemas and schematron, and associated
 RDF files from the WMO Code Registry. If a copy is not found, the script will go to the canonical sources,
-'http://schemas.wmo.int/iwxxm' and 'http://codes.wmo.int', to download them. Therefore, your machine will
+'https://schemas.wmo.int/iwxxm' and 'http://codes.wmo.int', to download them. Therefore, your machine will
 need access to the Internet when running this script the first time, and when switching to new versions.
 
 
@@ -165,10 +165,10 @@ The validator creates an OASIS style Catalog file on-the-fly for local validatio
 process up considerably. It is normally deleted when the script finishes. (Default: do not keep)
 
 The catalog file can be used in "XML-aware" editors that can perform XML full validation. With this flag
-set, the OASIS Catalog file is kept in the top-level directory with the name, 'catalog-<v>.xml' where
-<v> is the IWXXM major.minor number.
+set, the OASIS Catalog file is kept in the top-level directory with the name, 'catalog-VERSION.xml' where
+VERSION is the IWXXM version string.
 
-If a catalog-<v>.xml is already present in the directory, the script will NOT overwrite it, but use it as
+If the VERSION catalog file is already present in the directory, the script will NOT overwrite it, but use it as
 is.
 
 
@@ -202,15 +202,19 @@ When using tool the first time on Windows machines, the user must have the abili
 
 This script can be used to quickly validate IWXXM messages before dissemination in an operational environment.
 
-There are numerous examples of validated IWXXM documents on the Internet.  The canoncial IWXXM source has a few instances in the http://schemas.wmo.int/iwxxm/*version*/examples folders.
+There are numerous examples of validated IWXXM documents on the Internet.  The canoncial IWXXM source has a few instances in the https://schemas.wmo.int/iwxxm/VERSION/examples folders.
 
 Another repository of examples is the WMO-IM GitHub site: http://github.com/wmo-im/iwxxm-translation
 
-However, after genuine effort on your part, you cannot figure out the problem with your XML document, please raise your issue to the CBS TT-AvXML google group for assistance:
+However, after genuine effort on your part, you cannot figure out the problem with your XML document, please describe your issue in an e-mail to the WMO AvData task team at this address for assistance:
 
-https://groups.google.com/a/wmo.int/forum/#!forum/cbs-tt-avxml
+tt-avdata (AT) groups wmo int 
 
-There are people on that forum who have probably seen your issue before and can help.
+[spaces and periods removed to avoid spam e-mails]
+
+Your e-mail will go directly to TT-AvData team members.
+
+To access our team's e-mail archive, visit https://groups.wmo.int to subscribe.
 
 An 'ignoredURLs.txt' file is provided for the case when your IWXXM documents have `<extension>` blocks that
 contain references to URLs that are not part of the WMO Code Registry. By adding the URLs in this file,
