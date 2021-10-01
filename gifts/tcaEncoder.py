@@ -1,6 +1,6 @@
 #
 # Name: tcaEncoder.py
-# Purpose: To encode Tropical Cyclone Advisory information in IWXXM 3.0 XML format.
+# Purpose: To encode Tropical Cyclone Advisory information in IWXXM XML format.
 #
 # Author: Mark Oberfield
 # Organization: NOAA/NWS/OSTI/Meteorological Development Laboratory

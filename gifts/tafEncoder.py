@@ -2,7 +2,7 @@
 # tafEncoder.py
 #
 # Purpose: Encodes a python dictionary consisting of TAF components into a XML
-#          document according to the IWXXM 3.0 schema.
+#          document according to the IWXXM schema.
 #
 # Author: Mark Oberfield - MDL/OSTI/NWS/NOAA
 #
