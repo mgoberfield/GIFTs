@@ -204,7 +204,7 @@ This script can be used to quickly validate IWXXM messages before dissemination 
 
 There are numerous examples of validated IWXXM documents on the Internet.  The canoncial IWXXM source has a few instances in the https://schemas.wmo.int/iwxxm/VERSION/examples folders.
 
-Another repository of examples is the WMO-IM GitHub site: http://github.com/wmo-im/iwxxm-translation
+Another repository of examples is the WMO-IM GitHub site: https://github.com/wmo-im/iwxxm-translation
 
 However, after genuine effort on your part, you cannot figure out the problem with your XML document, please describe your issue in an e-mail to the WMO AvData task team at this address for assistance:
 
