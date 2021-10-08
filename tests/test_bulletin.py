@@ -131,6 +131,54 @@ TAF SBAF 101800Z NIL=
     _fh.close()
 
 
+def test_header_option():
+
+    taf_test = """FTUS45 KEKA 081900 CCA
+TAF SBAF 081800Z NIL=
+"""
+    collective = tafEncoder.encode(taf_test)
+    #
+    # Verify default - no WMO AHL line
+    collective.write()
+    fn = collective.get_bulletinIdentifier()
+
+    _fh = open(fn, 'r')
+    first_line = _fh.readline()
+    assert first_line != 'LTUS45 KEKA 081900 CCA\n'
+    _fh.close()
+    os.unlink(fn)
+
+    filename = os.path.join(tempfile.gettempdir(), fn)
+    _fh = open(filename, 'w')
+    #
+    # Insert WMO AHL line
+    collective.write(_fh, header=True)
+    _fh.close()
+
+    # Verify first line is the WMO AHL
+    _fh = open(filename, 'r')
+    first_line = _fh.readline()
+    assert first_line == 'LTUS45 KEKA 081900 CCA\n'
+    _fh.close()
+    os.unlink(filename)
+
+    taf_test = """FTUS41 KCAE 090000 AAB
+TAF AMD SBAF 090000Z 0900/1006 CNL="""
+
+    collective = tafEncoder.encode(taf_test)
+    #
+    # Insert WMO AHL line
+    collective.write(header=True)
+    fn = collective.get_bulletinIdentifier()
+
+    # Verify first line is the WMO AHL
+    _fh = open(fn, 'r')
+    first_line = _fh.readline()
+    assert first_line == 'LTUS41 KCAE 090000 AAB\n'
+    _fh.close()
+    os.unlink(fn)
+
+
 def test_operations():
 
     taf_test1 = """FTUS43 KBOU 081800
@@ -176,4 +224,5 @@ if __name__ == '__main__':
     test_unlike()
     test_realize()
     test_writes()
+    test_header_option()
     test_operations()

@@ -106,7 +106,7 @@ class Bulletin(object):
         self.bulletin.set('xmlns:gml', 'http://www.opengis.net/gml/3.2')
         self.bulletin.set('xmlns:xsi', 'http://www.w3.org/2001/XMLSchema-instance')
         self.bulletin.set('xsi:schemaLocation',
-                          'http://def.wmo.int/collect/2014 http://schemas.wmo.int/collect/1.2/collect.xsd')
+                          'http://def.wmo.int/collect/2014 https://schemas.wmo.int/collect/1.2/collect.xsd')
         self.bulletin.set('gml:id', 'uuid.%s' % uuid.uuid4())
 
         for child in self._children:
@@ -149,6 +149,8 @@ class Bulletin(object):
 
         keys = ['A_', 'tt', 'aaii', 'cccc', 'yygg', 'bbb', '_C_', 'cccc', time.strftime('_%Y%m%d%H%M%S.'), 'xml']
         self._bulletinID = ''.join([kwargs.get(key, key) for key in keys])
+        self._wmoAHL = '{}{} {} {} {}'.format(kwargs['tt'], kwargs['aaii'], kwargs['cccc'], kwargs['yygg'],
+                                              kwargs['bbb']).rstrip()
 
     def get_bulletinIdentifier(self):
 
@@ -160,16 +162,19 @@ class Bulletin(object):
         self._export()
         return self.bulletin
 
-    def _write(self, obj):
+    def _write(self, obj, header):
 
-        result = ET.tostring(self.bulletin, encoding=self.encoding, method='xml')
+        if header:
+            result = '{}\n{}'.format(self._wmoAHL, ET.tostring(self.bulletin, encoding=self.encoding, method='xml'))
+        else:
+            result = ET.tostring(self.bulletin, encoding=self.encoding, method='xml')
 
         if self._canBeCompressed:
             obj(result.encode('utf-8'))
         else:
             obj(result)
 
-    def write(self, obj=None):
+    def write(self, obj=None, header=False):
         """ElementTree to a file or stream.
 
         obj - if none provided, XML is written to current working directory, or
@@ -177,6 +182,9 @@ class Bulletin(object):
               file object, or
               character string as directory, or
               character string as a filename.
+
+        header - boolean as to whether the WMO AHL line should be included as first line in file. If true,
+                 the file is no longer valid XML.
 
         File extension indicated on <bulletinIdentifer> element's value determines
         whether compression is done. (Only gzip is permitted at this time)"""
@@ -195,7 +203,7 @@ class Bulletin(object):
         # If the object name is 'write'; Assume it's configured properly for writing
         try:
             if obj.__name__ == 'write':
-                return self._write(obj)
+                return self._write(obj, header)
         except AttributeError:
             pass
 
@@ -214,11 +222,11 @@ class Bulletin(object):
             else:
                 _fh = open(obj, 'w')
 
-            self._write(_fh.write)
+            self._write(_fh.write, header)
             _fh.close()
 
         else:
             if os.path.basename(obj.name) != self._bulletinID:
                 raise XMLError('Internal and external file names do not agree.')
 
-            self._write(obj.write)
+            self._write(obj.write, header)
