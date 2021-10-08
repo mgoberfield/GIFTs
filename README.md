@@ -105,7 +105,10 @@ This means that for the METAR, SPECI and TAF, the product starts with one of tho
 
 The WMO AHL line in the TAC file is crucial in forming the proper filename for the IWXXM Meteorological Bulletin, which is shown in the 'IWXXM XML file" text field.  The format of the filename follows the specifications outlined for Aviation XML products in WMO No. 368 Manual on the Global Telecommunication System.
 
-If you try to read the resulting XML file, you will see that it has no extraneous whitespace characters in it.  To make the XML file more readable, use the `xmllint --format` command to make the file contents "pretty".
+## Bulletins
+Every encoder, after processing a TAC message successfully, returns an object of the class [Bulletin](https://github.com/NOAA-MDL/GIFTs/blob/master/gifts/common/bulletin.py). The Bulletin object has similarities to a python list object: it has a "length" (the number of IWXXM XML reports); can be indexed; can be iterated; and [ElementTree](https://docs.python.org/3/library/xml.etree.elementtree.html) reports added and removed with the usual python list operators. In addition to the built-in list operations, python's [print()](https://docs.python.org/3/library/functions.html#print) function will nicely format (for human eyes) the bulletin object and write out the complete XML document.
+
+For international distribution, IWXXM reports, due to their increased character length and expanded character set, shall be set over the Extended ATS Message Handling System (AMHS) as a File Transfer Body Part.<sup>2</sup> The Bulletin class provides a convenient [write()](https://github.com/NOAA-MDL/GIFTs/blob/master/gifts/common/bulletin.py#L177) method to generate the `<MeterologicalBulletin>`<sup>3</sup> XML document for transmission over the AMHS.
 
 ## Caveats
 The decoders were written to follow Annex 3 specifications for the TAC forms. If your observations or forecast products deviate significantly from Annex 3, then this software will likely refuse to encode the data into IWXXM.  Fortunately, solutions can be readily found, ranging from trivial to challenging (see United States METAR/SPECI [reports](https://nws.weather.gov/schemas/iwxxm-us/3.0/examples/metars)).
@@ -114,4 +117,6 @@ The decoders were written to follow Annex 3 specifications for the TAC forms. If
 It is important that your IWXXM XML documents 'validate' before dissemination. If they don't, they may be rejected by your consumers. Separate from the GIFT software, MDL has provided a convienent python script that invokes NCAR's CRUX utility along with IWXXM schemas, schematron and supporting data files to perform this crucial step before disseminating your IWXXM products. The software can be found in the `/validation` subdirectory. Please consult the [README](https://github.com/NOAA-MDL/GIFTs/blob/master/validation) file for that utility.  You can use this utility to validate the IWXXM XML files created by the `demo1.py` program. 
 
 -------------------
-<sup>1</sup>Yes, we know the project name is presumptuous.
+<sup>1</sup>Yes, we know the project name is presumptuous.  
+<sup>2</sup>_Guidelines for the Implementation of OPMET Data Exchange using IWXXM, Fourth Edition - November 2020_  
+<sup>3</sup>_Manual on Codes, International Codes, Volume I.3, Annex II to the WMO Technical Regulations, Part D - Representations derived from data models, 2019 edition_, ref. FM 201-16
