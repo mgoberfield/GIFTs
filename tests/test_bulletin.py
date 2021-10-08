@@ -1,7 +1,7 @@
-from __future__ import print_function
 import os
 import pytest
 import tempfile
+import gzip
 
 import gifts.common.bulletin as bulletin
 from gifts.TAF import Encoder as TE
@@ -218,11 +218,56 @@ TAF SBAF 101800Z NIL=
     assert len(collective3) == 2
 
 
+def test_compression():
+
+    taf_test = """FTUS43 KBOU 081800 CCA
+TAF SBAF 101800Z NIL=
+"""
+    collective = tafEncoder.encode(taf_test, xml='xml.gz')
+    #
+    id = collective.get_bulletinIdentifier()
+    assert id[-2:] == 'gz'
+    #
+    # Verify that compressed file is written and without WMO AHL
+    # (header is ignored)
+    #
+    collective.write(header=True)
+    try:
+        _fh = gzip.open(id)
+    except Exception as exc:
+        assert False, f"Attempt to open gzip file failed {exc}"
+
+    first_line = _fh.readline().decode('utf-8')
+    assert first_line != 'LTUS43 KBOU 081800 CCA\n'
+    _fh.close()
+    os.unlink(id)
+
+    taf_test = """FTUS41 KCAE 101200
+TAF SBAF 101800Z NIL=
+"""
+    collective = tafEncoder.encode(taf_test)
+    id = collective.get_bulletinIdentifier()
+    assert id[-3:] == 'xml'
+
+    collective.write(compress=True)
+    nid = collective.get_bulletinIdentifier()
+    assert nid[-2:] == 'gz'
+
+    try:
+        _fh = gzip.open(nid)
+    except Exception as exc:
+        assert False, f"Attempt to open gzip file failed {exc}"
+
+    _fh.close()
+    os.unlink(nid)
+    
+
 if __name__ == '__main__':
 
     test_empty()
     test_unlike()
     test_realize()
+    test_operations()
     test_writes()
     test_header_option()
-    test_operations()
+    test_compression()

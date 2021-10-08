@@ -174,7 +174,7 @@ class Bulletin(object):
         else:
             obj(result)
 
-    def write(self, obj=None, header=False):
+    def write(self, obj=None, header=False, compress=False):
         """ElementTree to a file or stream.
 
         obj - if none provided, XML is written to current working directory, or
@@ -187,15 +187,21 @@ class Bulletin(object):
                  the file is no longer valid XML.
 
         File extension indicated on <bulletinIdentifer> element's value determines
-        whether compression is done. (Only gzip is permitted at this time)"""
+        whether compression is done OR the compress flag is set to True. (Only gzip is permitted at this time)"""
 
-        if self._bulletinID[-2:] == 'gz':
+        self._canBeCompressed = False
+        if compress or self._bulletinID[-2:] == 'gz':
             if 'gzip' in globals().keys():
                 self._canBeCompressed = True
             else:
                 raise SystemError('No capability to compress files using gzip()')
-        else:
-            self._canBeCompressed = False
+        #
+        # Do not include WMO AHL line in compressed files
+        if self._canBeCompressed:
+
+            header = False
+            if self._bulletinID[-2:] != 'gz':
+                self._bulletinID = '{}.gz'.format(self._bulletinID)
         #
         # Generate the bulletin for export to file or stream
         self._export()
