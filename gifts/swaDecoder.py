@@ -15,7 +15,10 @@ import os
 import re
 import time
 
+import skyfield
+
 from skyfield.api import Loader
+from skyfield.toposlib import wgs84
 
 from .common import tpg
 from .common import xmlConfig as des
@@ -109,7 +112,7 @@ class Decoder(tpg.Parser):
         #
         # Preparing Skyfield
         try:
-            load = Loader(os.path.join(os.path.dirname(__file__), '../data'), verbose=False)
+            load = Loader(os.path.join(skyfield.__path__[0], 'bsp_files'), verbose=False)
             self._ts = load.timescale()
             #
             # Open NAIF/JPL/NASA SPICE Kernel
@@ -118,7 +121,7 @@ class Decoder(tpg.Parser):
             self._Helios = planets['sun']
 
         except Exception:
-            self._Logger.exception('Unable to load/initialize Skyfield Module.')
+            self._Logger.exception('Unable to load/initialize Skyfield ephemeris file.')
             raise
 
         return super(Decoder, self).__init__()
@@ -264,7 +267,7 @@ class Decoder(tpg.Parser):
         #
         # Determine solar sub-point on Earth at forecast/observed time.
         fcsttime = self._ts.utc(*self.issueTime[:5])
-        subpoint = (self._Helios - self._Gaia).at(fcsttime).subpoint()
+        subpoint = wgs84.geographic_position_of((self._Helios - self._Gaia).at(fcsttime))
         self._affected['daylight'] = '%s %s' % (round(subpoint.latitude.degrees, 2),
                                                 round(subpoint.longitude.degrees, 2))
 
