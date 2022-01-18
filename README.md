@@ -32,7 +32,7 @@ The following instructions assume you are using a computer with a Unix-based ope
 To install the GIFTs<sup>1</sup> package system-wide, use Python's setuptools package and issue the following commands:
 
 	$ cd /path/to/install/directory
-	$ git clone git@github.com:NOAA-MDL/GIFTs.git
+	$ git clone https://github.com/NOAA-MDL/GIFTs.git
 	$ cd GIFTs
 	$ python setup.py install
 
@@ -52,61 +52,10 @@ While the METAR/SPECI and TAF encoders themselves require minimal setup for use,
 The METAR/SPECI and TAF encoders will need an external/user-provided resource that maps the ICAO 4-character identifiers to the aerodromes' location. The `database/` subdirectory contains a simple python script to construct a python dictionary to perform the mapping. Please consult the [README](https://github.com/NOAA-MDL/GIFTs/tree/master/gifts/database) file in that directory for more details on how to create a simple database that the GIFT software can use. Either this technique or setting up a database client using one of Python's database modules is required in order to use the GIFT encoders. The latter technique is beyond the scope of these instructions.
 
 ## Using the software
-To illustrate the use of the software, the demo subdirectory contains simple python programs, a small aerodrome database and sample files that we'll use to translate the TAC forms into IWXXM documents.  The demonstration program requires the Python Tk/Tcl package which is readily available with Python v3.8. 
-
-    $ cd GIFTs/demo
-    $ demo1.py
-
-If the installation was successful, you should see a small GUI appear on your screen, the 'Generate IWXXM From TAC Demonstrator', like so,
-
-![Initial state](images/demo1-1.png)
-
-The top row consists of a button, 'TAC File:' and a text field. Clicking on the 'TAC File' button pops up a secondary, file selection dialog, showing text files in the demo directory.  Select 'metars.txt' and click on 'Open'.
-
-![Metar file selected](images/demo1-2.png)
-
-The "Activity Msgs:" is a label to the scrolled text window which will contain any error or cautionary messages during the decoding and encoding steps to create the IWXXM Meteorological Bulletin.  Pressing the 'Generate IWXXM From TAC' button produces the following output:
-
-![Output from decoder](images/demo1-3.png)
-
-In the scrolled text window are messages from the METAR/SPECI TAC decoder which found some issues inside 'metars.txt'. The first message from the decoder:
-
-    METAR LGAZ NIL
-              ^
-    Expecting issuance time ddHHmmZ
-
-means at the point of the caret, '^', the decoder stopped because it was expecting to find the METAR issuance time, according to Annex 3 specifications for METAR/SPECI reports.  Consequently, the IWXXM METAR schema *requires* the issuance time as well in order to be valid. Because the time cannot be obtained from the TAC, and it is required information, an IWXXM XML document will not be created for this aerodrome.
-
-The second observation with a decoding problem:
-
-    METAR LGKL 110120Z 00000KT 9999 SCTO3O 18/16 Q1012
-                                    ^
-    Expecting directional minimum visibility or runway visual range or precipitation or obstruction to vision or precipitation in the vicinity or NCD, NSC or vertical visibility or cloud layer
- 
-The caret indicates that the decoder doesn't understand the scattered cloud layer at 3,000 ft. Do you see why? There are typos: a capital O were used in place of zeroes, 0.  For some fonts, the difference between the two characters are subtle. This illustrates that the decoder must understand everything in the TAC report in order to properly encode the data into XML. By fixing these typos, the IWXXM message for aerodrome LGKL can be created and the LGKL TAC can now be decoded cleanly by others as well.
-
-The remaining METAR reports were decoded without issues and their data encoded into IWXXM and packaged up in an Meteorological Bulletin.
-
-The Encoder class requires that the input file contain one WMO AHL line, appropriate for the TAC forms within it. Here are the regular expressions used to identify the WMO AHL line for particular TAC forms:
-
-    S(A|P)[A-Z][A-Z]\d\d\s+[A-Z]{4}\s+\d{6}(\s+[ACR]{2}[A-Z])? # for METAR/SPECI
-    FN\w\w\d\d\s+[A-Z]{4}\s+\d{6}(\s+[ACR]{2}[A-Z])? # Space Weather Advisories
-    FK\w\w\d\d\s+[A-Z]{4}\s+\d{6}(\s+[ACR]{2}[A-Z])? # Tropical Cyclone Advisory
-    F(C|T)\w\w\d\d\s+[A-Z]{4}\s+\d{6}(\s+[ACR]{2}[A-Z])? # TAF
-    FV\w\w\d\d\s+[A-Z]{4}\s+\d{6}(\s+[ACR]{2}[A-Z])? # Volcanic Ash Advisory
-And for capturing the individual TAC forms:
-
-    ^(?:METAR|SPECI)\s+(?:COR\s+)?[A-Z][A-Z0-9]{3}\s.+?=
-    ^SWX ADVISORY.+
-    ^TC ADVISORY.+
-    ^TAF(?:\s+(?:AMD|COR|CC[A-Z]|RTD))?\s+[A-Z]{4}.+?=
-    ^VA ADVISORY.+
-This means that for the METAR, SPECI and TAF, the product starts with one of those keywords and the product ends with a '=' character.  For the advisories, the software assumes there is just one advisory per input file.
-
-The WMO AHL line in the TAC file is crucial in forming the proper filename for the IWXXM Meteorological Bulletin, which is shown in the 'IWXXM XML file" text field.  The format of the filename follows the specifications outlined for Aviation XML products in WMO No. 368 Manual on the Global Telecommunication System.
+To illustrate the use of the software, the demo subdirectory contains two simple python programs. Consult the `demo/` subdirectory [README](https://github.com/NOAA-MDL/GIFTs/tree/master/demo) file for further details.
 
 ## Bulletins
-Every encoder, after processing a TAC message successfully, returns an object of the class [Bulletin](https://github.com/NOAA-MDL/GIFTs/blob/master/gifts/common/bulletin.py). The Bulletin object has similarities to a python list object: it has a "length" (the number of IWXXM XML reports); can be indexed; can be iterated; and [ElementTree](https://docs.python.org/3/library/xml.etree.elementtree.html) reports added and removed with the usual python list operations. In addition to the built-in list operations, python's [print()](https://docs.python.org/3/library/functions.html#print) function will nicely format (for human eyes) the bulletin object and write out the complete XML document to a file (default is sys.stdout).
+Every GIFTs encoder, after processing a TAC message successfully, returns an object of the class [Bulletin](https://github.com/NOAA-MDL/GIFTs/blob/master/gifts/common/bulletin.py). The Bulletin object has similarities to a python list object: it has a "length" (the number of IWXXM XML reports); can be indexed; can be iterated; and [ElementTree](https://docs.python.org/3/library/xml.etree.elementtree.html) reports added and removed with the usual python list operations. In addition to the built-in list operations, python's [print()](https://docs.python.org/3/library/functions.html#print) function will nicely format (for human eyes) the bulletin object and write out the complete XML document to a file (default is sys.stdout).
 
 For international distribution, IWXXM reports, due to their increased character length and expanded character set, shall be sent over the Extended ATS Message Handling System (AMHS) as a File Transfer Body Part.<sup>2</sup> The Bulletin class provides a convenient [write()](https://github.com/NOAA-MDL/GIFTs/blob/master/gifts/common/bulletin.py#L177) method to generate the `<MeterologicalBulletin>`<sup>3</sup> XML document for transmission over the AMHS.
 

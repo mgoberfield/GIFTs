@@ -1,5 +1,5 @@
 SHELL=/bin/sh
-VENV=.venv
+VENV=.gifts
 
 .PHONY: all build dev lint test clean distclean
 

@@ -263,6 +263,134 @@ NXT MSG:                  20180912/0000Z="""
     assert polygon.text == '33.533 -36.333 33.417 -36.283 34.000 -35.000 34.100 -36.683 33.533 -36.333'
 
 
+def test_tcaSynoptic_Times():
+
+    test = """FKNT22 KNHC 151436
+TCANT2
+
+TROPICAL STORM BILL ICAO ADVISORY NUMBER   5
+NWS NATIONAL HURRICANE CENTER MIAMI FL       AL022021
+1500 UTC TUE JUN 15 2021
+
+TC ADVISORY
+DTG:                      20210615/1500Z
+TCAC:                     KNHC
+TC:                       BILL
+ADVISORY NR:              2021/005
+OBS PSN:                  15/1500Z N4030 W06200
+MOV:                      NE 33KT
+INTST CHANGE:             NC
+C:                        0998HPA
+MAX WIND:                 050KT
+FCST PSN +3 HR:           15/1800Z N4225 W05939
+FCST MAX WIND +3 HR:      050KT
+FCST PSN +9 HR:           16/0000Z N4425 W05722
+FCST MAX WIND +9 HR:      050KT
+FCST PSN +15 HR:          16/0600Z N4628 W05507
+FCST MAX WIND +15 HR:     045KT
+FCST PSN +21 HR:          16/1200Z N//// W/////
+FCST MAX WIND +21 HR:     ///KT
+FCST PSN +27 HR:          16/1800Z N//// W/////
+FCST MAX WIND +27 HR:     ///KT
+RMK:                      SOME FORECAST INFORMATION IN
+                          THIS PRODUCT IS INTERPOLATED FROM
+                          OFFICIAL FORECAST DATA.
+NXT MSG:                  20210615/2100Z
+$$
+"""
+    #
+    # Extra forecast period with this change for 2022 season
+    first_siblings.insert(6, 'forecast')
+
+    bulletin = encoder.encode(test)
+    result = bulletin.pop()
+    assert len(result) == len(first_siblings)
+    for num, child in enumerate(result):
+        assert child.tag == first_siblings[num]
+
+    assert result.get('permissibleUsage') == 'OPERATIONAL'
+    assert result.get('permissibleUsageReason') is None
+
+    tree = ET.XML(ET.tostring(result))
+    for num, child in enumerate(first_siblings):
+        if num != 5:
+            element = tree.find('%s%s' % (iwxxm, child))
+        else:
+            elementList = tree.findall('%s%s' % (iwxxm, child))
+
+        if num == 0:
+            subelement = element.find('.//*{http://www.opengis.net/gml/3.2}timePosition')
+            assert subelement.text == '2021-06-15T15:00:00Z'
+
+        elif num == 1:
+            subelement = element.find('%sUnitTimeSlice' % find_aixm)
+            assert subelement[2].text == 'OTHER:TCAC'
+            assert subelement[3].text == 'KNHC'
+
+        elif num == 2:
+            subelement = element.find('{http://def.wmo.int/metce/2013}TropicalCyclone')
+            assert subelement[0].text == 'BILL'
+
+        elif num == 3:
+            assert element.text == '2021/005'
+
+        elif num == 4:
+            time = element.find('%stimePosition' % find_gml)
+            assert time.text == '2021-06-15T15:00:00Z'
+            position = element.find('%spos' % find_gml)
+            assert position.text == '40.500 -62.000'
+            movement = element.find('%smovement' % find_iwxxm)
+            assert movement.text == 'MOVING'
+            movement = element.find('%smovementDirection' % find_iwxxm)
+            assert movement.text == '45'
+            movement = element.find('%smovementSpeed' % find_iwxxm)
+            assert movement.text == '33'
+            intensityChg = element.find('%sintensityChange' % find_iwxxm)
+            assert intensityChg.text == 'NO_CHANGE'
+            pressure = element.find('%scentralPressure' % find_iwxxm)
+            assert pressure.text == '998'
+            maxWSpeed = element.find('%smaximumSurfaceWindSpeed' % find_iwxxm)
+            assert maxWSpeed.text == '50'
+
+        elif num == 5:
+            for fcnt, forecast in enumerate(elementList):
+                time = forecast.find('%stimePosition' % find_gml)
+                position = forecast.find('%spos' % find_gml)
+                maxWSpeed = forecast.find('%smaximumSurfaceWindSpeed' % find_iwxxm)
+
+                if fcnt == 0:
+                    assert time.text == '2021-06-15T18:00:00Z'
+                    assert position.text == '42.417 -59.650'
+                    assert maxWSpeed.text == '50'
+                elif fcnt == 1:
+                    assert time.text == '2021-06-16T00:00:00Z'
+                    assert position.text == '44.417 -57.367'
+                    assert maxWSpeed.text == '50'
+                elif fcnt == 2:
+                    assert time.text == '2021-06-16T06:00:00Z'
+                    assert position.text == '46.467 -55.117'
+                    assert maxWSpeed.text == '45'
+                elif fcnt == 3:
+                    assert time.text == '2021-06-16T12:00:00Z'
+                    position = forecast.find('%stropicalCyclonePosition' % find_iwxxm)
+                    assert position.get('nilReason') == codes[des.NIL][des.NA][0]
+                    assert maxWSpeed.get('nilReason') == codes[des.NIL][des.NOOPRSIG][0]
+                elif fcnt == 4:
+                    assert time.text == '2021-06-16T18:00:00Z'
+                    position = forecast.find('%stropicalCyclonePosition' % find_iwxxm)
+                    assert position.get('nilReason') == codes[des.NIL][des.NA][0]
+                    assert maxWSpeed.get('nilReason') == codes[des.NIL][des.NOOPRSIG][0]
+
+        elif num == 10:
+            assert len(element.text) > 0
+        elif num == 11:
+            time = element.find('%stimePosition' % find_gml)
+            assert time.text == '2021-06-15T21:00:00Z'
+    #
+    # So remaining tests with the older format still work.
+    first_siblings.pop(6)
+
+
 def test_tcaMetric():
 
     test = """FKPQ30 RJTD 111800
@@ -610,6 +738,7 @@ if __name__ == '__main__':
     test_tcaTest()
     test_tcaExercise()
     test_tcaNormal()
+    test_tcaSynoptic_Times()
     test_tcaMetric()
     test_developing()
     test_dissipation()
