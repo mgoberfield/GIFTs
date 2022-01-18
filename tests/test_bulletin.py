@@ -4,14 +4,11 @@ import tempfile
 import gzip
 
 import gifts.common.bulletin as bulletin
-from gifts.TAF import Encoder as TE
-from gifts.METAR import Encoder as ME
+from gifts.TCA import Encoder as TE
+from gifts.SWA import Encoder as SE
 
-
-database = {'SBAF': 'AFONSOS ARPT MI|||-22.87 -43.37'}
-
-tafEncoder = TE(database)
-metarEncoder = ME(database)
+tcaEncoder = TE()
+swaEncoder = SE()
 
 
 def test_empty():
@@ -34,16 +31,18 @@ def test_empty():
 
 def test_unlike():
 
-    taf_test = """FTUS43 KBOU 081800
-TAF SBAF 101800Z NIL=
+    tca_test = """FKNT23 KNHC 111800
+TC ADVISORY
+STATUS: TEST=
 """
 
-    metar_test = """SAUS51 KLWX 081800
-METAR SBAF 101800Z NIL=
+    swa_test = """FNXX01 KWNP 141901
+SWX ADVISORY
+STATUS: TEST=
 """
 
-    collective1 = tafEncoder.encode(taf_test)
-    collective2 = metarEncoder.encode(metar_test)
+    collective1 = tcaEncoder.encode(tca_test)
+    collective2 = swaEncoder.encode(swa_test)
 
     with pytest.raises(SyntaxError):
         collective1 + collective2
@@ -54,10 +53,11 @@ METAR SBAF 101800Z NIL=
 
 def test_realize():
 
-    taf_test = """FTUS43 KBOU 081800
-TAF SBAF 101800Z NIL=
-"""
-    collective1 = tafEncoder.encode(taf_test)
+    test = """FKNT23 KNHC 111800
+TC ADVISORY
+STATUS: TEST="""
+
+    collective1 = tcaEncoder.encode(test)
     metBulletin = collective1.export()
     #
     # For test message the iwxxm message (parent) only has two children
@@ -77,120 +77,18 @@ TAF SBAF 101800Z NIL=
         collective2.export()
 
 
-def test_writes():
-
-    taf_test = """FTUS43 KBOU 081800
-TAF SBAF 101800Z NIL=
-"""
-    collective1 = tafEncoder.encode(taf_test)
-    #
-    # No filename provided
-    collective1.write()
-    os.unlink(collective1.get_bulletinIdentifier())
-
-    _fh = open(os.devnull, 'w')
-    collective1.write(_fh.write)
-    with pytest.raises(SyntaxError):
-        collective1.write(_fh)
-    _fh.close()
-    #
-    # Indicate bulletin, when written out, is to be compressed
-    collective2 = tafEncoder.encode(taf_test, xml="xml.gz")
-    #
-    # No filename provided
-    collective2.write()
-    os.unlink(collective2.get_bulletinIdentifier())
-    #
-    # This time because external and internal name of the file disagree
-    _fh = open(os.devnull, 'wb')
-    with pytest.raises(SyntaxError):
-        collective2.write(_fh)
-    _fh.close()
-    #
-    # Same.
-    with pytest.raises(SyntaxError):
-        collective1.write(os.devnull)
-    #
-    # Passes now because internal and external names agree
-    filename = os.path.join(tempfile.gettempdir(), collective2.get_bulletinIdentifier())
-    _fh = open(filename, 'wb')
-    collective2.write(_fh)
-    _fh.close()
-    os.unlink(filename)
-    #
-    collective2.write(filename)
-    os.unlink(filename)
-    #
-    # Pass in a directory
-    collective2.write(tempfile.gettempdir())
-    os.unlink(filename)
-    #
-    # Print is normally to stdout, but for testing, route output to /dev/null
-    _fh = open(os.devnull, 'w')
-    print(collective2, file=_fh)
-    _fh.close()
-
-
-def test_header_option():
-
-    taf_test = """FTUS45 KEKA 081900 CCA
-TAF SBAF 081800Z NIL=
-"""
-    collective = tafEncoder.encode(taf_test)
-    #
-    # Verify default - no WMO AHL line
-    collective.write()
-    fn = collective.get_bulletinIdentifier()
-
-    _fh = open(fn, 'r')
-    first_line = _fh.readline()
-    assert first_line != 'LTUS45 KEKA 081900 CCA\n'
-    _fh.close()
-    os.unlink(fn)
-
-    filename = os.path.join(tempfile.gettempdir(), fn)
-    _fh = open(filename, 'w')
-    #
-    # Insert WMO AHL line
-    collective.write(_fh, header=True)
-    _fh.close()
-
-    # Verify first line is the WMO AHL
-    _fh = open(filename, 'r')
-    first_line = _fh.readline()
-    assert first_line == 'LTUS45 KEKA 081900 CCA\n'
-    _fh.close()
-    os.unlink(filename)
-
-    taf_test = """FTUS41 KCAE 090000 AAB
-TAF AMD SBAF 090000Z 0900/1006 CNL="""
-
-    collective = tafEncoder.encode(taf_test)
-    #
-    # Insert WMO AHL line
-    collective.write(header=True)
-    fn = collective.get_bulletinIdentifier()
-
-    # Verify first line is the WMO AHL
-    _fh = open(fn, 'r')
-    first_line = _fh.readline()
-    assert first_line == 'LTUS41 KCAE 090000 AAB\n'
-    _fh.close()
-    os.unlink(fn)
-
-
 def test_operations():
 
-    taf_test1 = """FTUS43 KBOU 081800
-TAF SBAF 101800Z NIL=
-"""
+    test1 = """FKNT23 KNHC 111800
+TC ADVISORY
+STATUS: TEST="""
 
-    taf_test2 = """FTUS43 KBOU 081800
-TAF SBAF 101800Z NIL=
-"""
+    test2 = """FKNT21 KNHC 111800
+TC ADVISORY
+STATUS: TEST="""
 
-    collective1 = tafEncoder.encode(taf_test1)
-    collective2 = tafEncoder.encode(taf_test2)
+    collective1 = tcaEncoder.encode(test1)
+    collective2 = tcaEncoder.encode(test2)
 
     assert len(collective1) == 1
     assert len(collective2) == 1
@@ -218,49 +116,186 @@ TAF SBAF 101800Z NIL=
     assert len(collective3) == 2
 
 
+def test_writes():
+
+    test = """FKPQ30 RJTD 111800
+TC ADVISORY
+STATUS:               EXER
+DTG:                  20180911/1800Z
+TCAC:                 TOKYO
+TC:                   MANGKHUT
+ADVISORY NR:          2018/19
+OBS PSN:              11/1800Z N1400 E13725
+CB:                   WI 180NM OF TC CENTRE TOP ABV FL450
+MOV:                  W 12KT
+INTST CHANGE:         INTSF
+C:                    905HPA
+MAX WIND:             110KT
+FCST PSN +6 HR:       12/0000Z N1405 E13620
+FCST MAX WIND +6 HR:  110KT
+FCST PSN +12 HR:      12/0600Z N1420 E13510
+FCST MAX WIND +12 HR: 110KT
+FCST PSN +18 HR:      12/1200Z N1430 E134
+FCST MAX WIND +18 HR: 110KT
+FCST PSN +24 HR:      12/1800Z N1450 E13250
+FCST MAX WIND +24 HR: 110KT
+RMK:                  NIL
+NXT MSG:              BFR 20180912/0000Z=
+"""
+    collective1 = tcaEncoder.encode(test)
+    #
+    # No filename provided
+    fn = collective1.write()
+    assert os.path.isfile(fn)
+    assert fn[-3:] == 'xml'
+    os.unlink(fn)
+    #
+    # Pass write method -- doesn't matter what the name is.
+    _fh = open(os.devnull, 'w')
+    fn = collective1.write(_fh.write)
+    assert fn is None
+    #
+    # Indicate bulletin, when written out, is to be compressed
+    collective2 = tcaEncoder.encode(test)
+    #
+    # No filename provided
+    fn = collective2.write(compress=True)
+    assert fn[-2:] == 'gz'
+    os.unlink(fn)
+    #
+    # Pass in a directory
+    fn = collective2.write(tempfile.gettempdir())
+    assert os.path.isfile(fn)
+    os.unlink(fn)
+
+
+def test_header_option():
+
+    test = """FKNT22 KNHC 151436
+TCANT2
+
+TROPICAL STORM BILL ICAO ADVISORY NUMBER   5
+NWS NATIONAL HURRICANE CENTER MIAMI FL       AL022021
+1500 UTC TUE JUN 15 2021
+
+TC ADVISORY
+DTG:                      20210615/1500Z
+TCAC:                     KNHC
+TC:                       BILL
+ADVISORY NR:              2021/005
+OBS PSN:                  15/1500Z N4030 W06200
+MOV:                      NE 33KT
+INTST CHANGE:             NC
+C:                        0998HPA
+MAX WIND:                 050KT
+FCST PSN +3 HR:           15/1800Z N4225 W05939
+FCST MAX WIND +3 HR:      050KT
+FCST PSN +9 HR:           16/0000Z N4425 W05722
+FCST MAX WIND +9 HR:      050KT
+FCST PSN +15 HR:          16/0600Z N4628 W05507
+FCST MAX WIND +15 HR:     045KT
+FCST PSN +21 HR:          16/1200Z N//// W/////
+FCST MAX WIND +21 HR:     ///KT
+FCST PSN +27 HR:          16/1800Z N//// W/////
+FCST MAX WIND +27 HR:     ///KT
+RMK:                      SOME FORECAST INFORMATION IN
+                          THIS PRODUCT IS INTERPOLATED FROM
+                          OFFICIAL FORECAST DATA.
+NXT MSG:                  20210615/2100Z
+$$
+"""
+    collective = tcaEncoder.encode(test)
+    #
+    # Verify default - no WMO AHL line
+    fn = collective.write()
+    _fh = open(fn, 'r')
+    first_line = _fh.readline()
+    assert first_line != 'LKNT22 KNHC 151436\n'
+    _fh.close()
+    os.unlink(fn)
+    #
+    # Insert WMO AHL line
+    filename = os.path.join(tempfile.gettempdir(), 'asdfas.txt')
+    _fh = open(filename, 'w')
+    collective.write(_fh.write, header=True)
+    _fh.close()
+
+    # Verify first line is the WMO AHL
+    _fh = open(filename, 'r')
+    first_line = _fh.readline()
+    assert first_line == 'LKNT22 KNHC 151436\n'
+    _fh.close()
+    os.unlink(filename)
+
+    collective2 = tcaEncoder.encode(test)
+    fn = collective2.write(header=True)
+    assert fn[-4:] == '.txt'
+    #
+    # Although the external file has the extension 'txt', the internal bulletinIdentifier in the
+    # XML document is still 'xml'
+    assert collective2._internalBulletinId[-4:] == '.xml'
+
+    _fh = open(fn, 'r')
+    first_line = _fh.readline()
+    assert first_line == 'LKNT22 KNHC 151436\n'
+    _fh.close()
+    os.unlink(fn)
+
+
 def test_compression():
 
-    taf_test = """FTUS43 KBOU 081800 CCA
-TAF SBAF 101800Z NIL=
+    test = """FKNT23 KNHC 231458
+TCANT3
+
+REMNANTS OF THREE ICAO ADVISORY NUMBER   4
+NWS NATIONAL HURRICANE CENTER MIAMI FL       AL032019
+1500 UTC TUE JUL 23 2019
+
+TC ADVISORY
+DTG:                      20190723/1500Z
+TCAC:                     KNHC
+TC:                       THREE
+ADVISORY NR:              2019/004
+OBS PSN:                  23/1500Z N29 W080
+MOV:                      NNE 15KT
+INTST CHANGE:             WKN
+C:                        1014HPA
+MAX WIND:                 030KT
+FCST PSN +6 HR:           23/2100Z N2955 W07839
+FCST MAX WIND +6 HR:      030KT
+FCST PSN +12 HR:          24/0300Z N3325 W07230
+FCST MAX WIND +12 HR:     025KT
+FCST PSN +18 HR:          24/0900Z N//// W/////
+FCST MAX WIND +18 HR:     025KT
+FCST PSN +24 HR:          24/1500Z N4530 W05505
+FCST MAX WIND +24 HR:     ///KT
+RMK:                      THE FORECAST POSITION INFORMATION IN
+                          THIS PRODUCT IS INTERPOLATED FROM
+                          OFFICIAL FORECAST DATA VALID AT 0000...
+                          0600...1200...AND 1800Z.
+NXT MSG:                  NO MSG EXP
 """
-    collective = tafEncoder.encode(taf_test, xml='xml.gz')
-    #
-    id = collective.get_bulletinIdentifier()
-    assert id[-2:] == 'gz'
+    collective = tcaEncoder.encode(test)
     #
     # Verify that compressed file is written and without WMO AHL
     # (header is ignored)
     #
-    collective.write(header=True)
+    fn = collective.write(header=True, compress=True)
+    assert fn[-7:] == '.xml.gz'
+    assert collective._internalBulletinId[-7:] == '.xml.gz'
+
+    assert os.path.basename(fn) == collective._internalBulletinId
+
     try:
-        _fh = gzip.open(id)
+        _fh = gzip.open(fn)
     except Exception as exc:
-        assert False, f"Attempt to open gzip file failed {exc}"
+        assert False, "Attempt to open gzip file failed: %s" % str(exc)
 
     first_line = _fh.readline().decode('utf-8')
-    assert first_line != 'LTUS43 KBOU 081800 CCA\n'
+    assert first_line != 'LKNT23 KNHC 231458\n'
     _fh.close()
-    os.unlink(id)
+    os.unlink(fn)
 
-    taf_test = """FTUS41 KCAE 101200
-TAF SBAF 101800Z NIL=
-"""
-    collective = tafEncoder.encode(taf_test)
-    id = collective.get_bulletinIdentifier()
-    assert id[-3:] == 'xml'
-
-    collective.write(compress=True)
-    nid = collective.get_bulletinIdentifier()
-    assert nid[-2:] == 'gz'
-
-    try:
-        _fh = gzip.open(nid)
-    except Exception as exc:
-        assert False, f"Attempt to open gzip file failed {exc}"
-
-    _fh.close()
-    os.unlink(nid)
-    
 
 if __name__ == '__main__':
 

@@ -4,6 +4,7 @@ except ValueError:
     pass
 
 import os
+import re
 import sys
 import time
 import uuid
@@ -24,6 +25,8 @@ class Bulletin(object):
             self.encoding = 'unicode'
         else:
             self.encoding = 'UTF-8'
+
+        self.xmlFileNamePartA = re.compile(r'A_L[A-Z]{3}\d\d[A-Z]{4}\d{6}([ACR]{2}[A-Z])?_C_[A-Z]{4}')
 
     def __len__(self):
 
@@ -90,14 +93,16 @@ class Bulletin(object):
 
         return newBulletin
 
-    def _export(self):
+    def _export(self, compress=False):
         """Construct a <MeteorologicalBulletin> ElementTree"""
 
         if len(self) == 0:
             raise XMLError("At least one meteorologicalInformation child must be present in a bulletin.")
 
         try:
-            self._bulletinID
+            if self.xmlFileNamePartA.match(self._bulletinId) is None:
+                raise XMLError('bulletinIdentifier does not conform to WMO. 386')
+
         except AttributeError:
             raise XMLError("bulletinIdentifier needs to be set")
 
@@ -113,8 +118,12 @@ class Bulletin(object):
             metInfo = ET.SubElement(self.bulletin, 'meteorologicalInformation')
             metInfo.append(child)
 
+        fn = '{}_{}.xml'.format(self._bulletinId, time.strftime('%Y%m%d%H%M%S'))
+        if compress:
+            fn = '{}.gz'.format(fn)
+
         bulletinId = ET.SubElement(self.bulletin, 'bulletinIdentifier')
-        bulletinId.text = self._bulletinID
+        bulletinId.text = self._internalBulletinId = fn
 
     def what_kind(self):
         """Returns what type or 'kind' of <meteorologicalInformation> children are kept in this bulletin"""
@@ -147,14 +156,10 @@ class Bulletin(object):
 
     def set_bulletinIdentifier(self, **kwargs):
 
-        keys = ['A_', 'tt', 'aaii', 'cccc', 'yygg', 'bbb', '_C_', 'cccc', time.strftime('_%Y%m%d%H%M%S.'), 'xml']
-        self._bulletinID = ''.join([kwargs.get(key, key) for key in keys])
+        keys = ['A_', 'tt', 'aaii', 'cccc', 'yygg', 'bbb', '_C_', 'cccc']
+        self._bulletinId = ''.join([kwargs.get(key, key) for key in keys])
         self._wmoAHL = '{}{} {} {} {}'.format(kwargs['tt'], kwargs['aaii'], kwargs['cccc'], kwargs['yygg'],
                                               kwargs['bbb']).rstrip()
-
-    def get_bulletinIdentifier(self):
-
-        return self._bulletinID
 
     def export(self):
         """Construct and return a <MeteorologicalBulletin> ElementTree"""
@@ -162,77 +167,76 @@ class Bulletin(object):
         self._export()
         return self.bulletin
 
-    def _write(self, obj, header):
+    def _write(self, obj, header, compress):
 
         if header:
             result = '{}\n{}'.format(self._wmoAHL, ET.tostring(self.bulletin, encoding=self.encoding, method='xml'))
         else:
             result = ET.tostring(self.bulletin, encoding=self.encoding, method='xml')
 
-        if self._canBeCompressed:
+        if compress:
             obj(result.encode('utf-8'))
         else:
             obj(result)
 
     def write(self, obj=None, header=False, compress=False):
-        """ElementTree to a file or stream.
+        """Writes ElementTree to a file or stream.
 
         obj - if none provided, XML is written to current working directory, or
-              write() method, or
-              file object, or
               character string as directory, or
-              character string as a filename.
+              a write() method
 
         header - boolean as to whether the WMO AHL line should be included as first line in file. If true,
                  the file is no longer valid XML.
 
-        File extension indicated on <bulletinIdentifer> element's value determines
-        whether compression is done OR the compress flag is set to True. (Only gzip is permitted at this time)"""
+        If applicable, returns fullpath to the XML bulletin"""
 
-        self._canBeCompressed = False
-        if compress or self._bulletinID[-2:] == 'gz':
+        canBeCompressed = False
+        if compress:
             if 'gzip' in globals().keys():
-                self._canBeCompressed = True
+                canBeCompressed = True
             else:
                 raise SystemError('No capability to compress files using gzip()')
         #
         # Do not include WMO AHL line in compressed files
-        if self._canBeCompressed:
-
+        if canBeCompressed:
             header = False
-            if self._bulletinID[-2:] != 'gz':
-                self._bulletinID = '{}.gz'.format(self._bulletinID)
         #
-        # Generate the bulletin for export to file or stream
-        self._export()
+        # Generate the Meteorological Bulletin for writing
+        try:
+            self._internalBulletinId
+        except AttributeError:
+            self._export(canBeCompressed)
         #
         # If the object name is 'write'; Assume it's configured properly for writing
         try:
             if obj.__name__ == 'write':
-                return self._write(obj, header)
+                self._write(obj, header, canBeCompressed)
+                return None
+
         except AttributeError:
             pass
-
-        if type(obj) == str or obj is None:
-
+        #
+        # Write to current directory if None, or to the directory path provided.
+        if obj is None or os.path.isdir(obj):
             if obj is None:
-                obj = self._bulletinID
-            elif os.path.isdir(obj):
-                obj = os.path.join(obj, self._bulletinID)
-            else:
-                if os.path.basename(obj) != self._bulletinID:
-                    raise XMLError('Internal ID and external file names do not agree.')
+                obj = os.getcwd()
 
-            if self._canBeCompressed:
-                _fh = gzip.open(obj, 'wb')
+            if header:
+                fullpath = os.path.join(obj, self._internalBulletinId.replace('xml', 'txt'))
             else:
-                _fh = open(obj, 'w')
+                fullpath = os.path.join(obj, self._internalBulletinId)
+            #
+            # Write it out.
+            if canBeCompressed:
+                _fh = gzip.open(fullpath, 'wb')
+            else:
+                _fh = open(fullpath, 'w')
 
-            self._write(_fh.write, header)
+            self._write(_fh.write, header, canBeCompressed)
             _fh.close()
 
-        else:
-            if os.path.basename(obj.name) != self._bulletinID:
-                raise XMLError('Internal and external file names do not agree.')
+            return fullpath
 
-            self._write(obj.write, header)
+        else:
+            raise IOError('First argument is an unsupported type: %s' % str(type(obj)))

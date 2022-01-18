@@ -21,7 +21,7 @@ IWXXM became a WMO standard on 5 November 2020. Met Offices shall disseminate ME
 
 As XML, and creating XML documents, may be unfamiliar technology to those without an IT background, MDL is providing software to assist those in creating the new XML documents based on IWXXM schemas.
 
-It should be understood that the software provided here is a short-term solution as TAC forms of these products will cease to be a standard and no longer disseminated by 2029.
+It should be understood that the software provided here is a short-term solution as TAC forms of these products will cease to be a ICAO/WMO standard by 2029.
 
 ## Prequisites
 This software is written entirely in the Python language. Python interpreter v3.7 or better is required.
@@ -110,13 +110,10 @@ Every encoder, after processing a TAC message successfully, returns an object of
 
 For international distribution, IWXXM reports, due to their increased character length and expanded character set, shall be sent over the Extended ATS Message Handling System (AMHS) as a File Transfer Body Part.<sup>2</sup> The Bulletin class provides a convenient [write()](https://github.com/NOAA-MDL/GIFTs/blob/master/gifts/common/bulletin.py#L177) method to generate the `<MeterologicalBulletin>`<sup>3</sup> XML document for transmission over the AMHS.
 
-Because of the character length of the `<MeteorologicalBulletin>`, the File Transfer Body Part shall be a compressed file using the gzip protocol. By default, the `.encode()` method of the [Encoder](https://github.com/NOAA-MDL/GIFTs/blob/master/gifts/common/Encoder.py#L15) class is to generate an uncompressed file when the bulletin.write() method is invoked. To generate a compressed `<MeteorologicalBulletin>` file for transmission over the AMHS, supply an additional argument to the `.encode()` method, like so:
-
-    Encoder.encode(tacString, xml='xml.gz')
-An alternative method is to set the `compress` flag to True in the Bulletin object's write() method, like so:
+Because of the character length of the `<MeteorologicalBulletin>`, the File Transfer Body Part shall be a compressed file using the gzip protocol. By default, the `.encode()` method of the [Encoder](https://github.com/NOAA-MDL/GIFTs/blob/master/gifts/common/Encoder.py#L15) class is to generate an uncompressed file when the bulletin.write() method is invoked. To generate a compressed `<MeteorologicalBulletin>` file for transmission over the AMHS is to set the `compress` flag to True in the Bulletin object's write() method, like so:
 
     bulletin.write(compress=True)  
-Either method will generate a gzip file containing the `<MeteorologicalBulletin>` suitable for transmission over the AMHS.
+This will generate a gzip file containing the `<MeteorologicalBulletin>` suitable for transmission over the AMHS.
 
 ## Caveats
 The decoders were written to follow Annex 3 specifications for the TAC forms. If your observations or forecast products deviate significantly from Annex 3, then this software will likely refuse to encode the data into IWXXM.  Fortunately, solutions can be readily found, ranging from trivial to challenging (see United States METAR/SPECI [reports](https://nws.weather.gov/schemas/iwxxm-us/3.0/examples/metars)).
