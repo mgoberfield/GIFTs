@@ -68,5 +68,6 @@ The associated configuration file, `iwxxmd.cfg`, is well documented internally a
     $ iwxxmd.py iwxxmd.cfg
 
 Any misconfiguration will result in an error message being written to the console and the daemon will not start. Like most UNIX/Linux daemons, the process can run indefinitely in the background. Should the daemon run into any difficulties, it will write messages to its log file.  The log file name format follows this format `<product>_iwxxmd_<DOW>` where `<product>` is one of `'metar'`, `'swa'`, `'taf'`, `'tca'`, or `'vaa'`, and `<DOW>` is the abbreviated day of the week, e.g. `'vaa_iwxxmd_Mon'`. The daemon will 'ping' to the log file every hour to indicate that it is 'alive'. While active, the daemon will report the files read in and the files written out. When midnight arrives, the daemon will switch to a different log file. Thus, a maximum of seven log files are created with each file being overwritten after 6 days.
+
 -------------------
 <sup>1</sup>When running the demo1.py program for the first time, it may take several minutes before the GUI appears. This is due to the Skyfield module downloading a large ephemris file from the JPL website. To disable this activity, comment out (or remove) lines 104-105 in demo1.py which initializes the Space Weather Advisory Encoder.
