@@ -8,7 +8,7 @@ This repository is a scientific product and is not official communication of the
 
 -------------------------------------------------------------------------------
 # Generate IWXXM From TAC
-This repository hosts software provided by the United States National Weather Service's [Meteorological Development Laboratory](https://vlab.ncep.noaa.gov/web/mdl) (MDL) that transforms Annex 3 Traditional Alphanumeric Code (TAC) forms into IWXXM format.
+This repository hosts software provided by the United States National Weather Service's [Meteorological Development Laboratory](https://vlab.noaa.gov/web/mdl) (MDL) that transforms Annex 3 Traditional Alphanumeric Code (TAC) forms into IWXXM format.
 
 The ICAO Meteorological Information Exchange Model (IWXXM) is a format for reporting weather information in eXtensible Markup Language (XML). The IWXXM XML schemas, developed and hosted by the WMO in association with ICAO, are used to encode aviation products described in the Meteorological Service for International Air Navigation, Annex 3 to the Convention on International Civil Aviation.
 
@@ -57,7 +57,7 @@ To illustrate the use of the software, the demo subdirectory contains two simple
 ## Bulletins
 Every GIFTs encoder, after processing a TAC message successfully, returns an object of the class [Bulletin](https://github.com/NOAA-MDL/GIFTs/blob/master/gifts/common/bulletin.py). The Bulletin object has similarities to a python list object: it has a "length" (the number of IWXXM XML reports); can be indexed; can be iterated; and [ElementTree](https://docs.python.org/3/library/xml.etree.elementtree.html) reports added and removed with the usual python list operations. In addition to the built-in list operations, python's [print()](https://docs.python.org/3/library/functions.html#print) function will nicely format (for human eyes) the bulletin object and write out the complete XML document to a file (default is sys.stdout).
 
-For international distribution, IWXXM reports, due to their increased character length and expanded character set, shall be sent over the Extended ATS Message Handling System (AMHS) as a File Transfer Body Part.<sup>2</sup> The Bulletin class provides a convenient [write()](https://github.com/NOAA-MDL/GIFTs/blob/master/gifts/common/bulletin.py#L177) method to generate the `<MeterologicalBulletin>`<sup>3</sup> XML document for transmission over the AMHS.
+For international distribution, IWXXM reports, due to their increased character length and expanded character set, shall be sent over the Extended ATS Message Handling System (AMHS) as a File Transfer Body Part.<sup>2</sup> The Bulletin class provides a convenient [write()](https://github.com/NOAA-MDL/GIFTs/blob/master/gifts/common/bulletin.py#L189) method to generate the `<MeterologicalBulletin>`<sup>3</sup> XML document for transmission over the AMHS.
 
 Because of the character length of the `<MeteorologicalBulletin>`, the File Transfer Body Part shall be a compressed file using the gzip protocol. By default, the `.encode()` method of the [Encoder](https://github.com/NOAA-MDL/GIFTs/blob/master/gifts/common/Encoder.py#L15) class is to generate an uncompressed file when the bulletin.write() method is invoked. To generate a compressed `<MeteorologicalBulletin>` file for transmission over the AMHS is to set the `compress` flag to True in the Bulletin object's write() method, like so:
 

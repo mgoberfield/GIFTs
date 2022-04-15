@@ -18,7 +18,7 @@ trees while parsing.
 """
 
 # Toy Parser Generator: A Python parser generator
-# Copyright (C) 2001-2013 Christophe Delord
+# Copyright (C) 2001-2022 Christophe Delord
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -35,41 +35,41 @@ trees while parsing.
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 # For further information about TPG you can visit
-# http://cdsoft.fr/tpg
+# http://cdelord.fr/tpg
 
 # TODO:
 #   - indent and dedent preprocessor
 #
 
 __tpgname__ = 'TPG'
-__version__ = '3.2.2'
-__date__ = '2013-12-29'
+__version__ = '3.2.4'
+__date__ = '2022-01-28'
 __description__ = "A Python parser generator"
 __long_description__ = __doc__
 __license__ = 'LGPL'
 __author__ = 'Christophe Delord'
-__email__ = 'cdsoft.fr'
-__url__ = 'http://cdsoft.fr/tpg/'
+__email__ = 'cdelord.fr'
+__url__ = 'http://cdelord.fr/tpg/'
 
-import parser
 import re
 import sre_parse
 import sys
-#
+
 # Python 2/3 compatibility
 __python__ = sys.version_info[0]
-if __python__ == 2:
+
+if __python__ == 3:
     import collections
-elif __python__ == 3:
-    import collections.abc as collections
+    if callable is None:
+        def callable(value): return isinstance(value, collections.Callable)
+
+    # def exc(): return sys.exc_info()[1]
+
+if __python__ == 2:
+    def exc(): return sys.exc_value
 
 
-def exc():
-    sys.exc_info()[1]
-
-
-def _id(x):
-    return x
+def _id(x): return x
 
 
 tab = " " * 4
@@ -221,8 +221,8 @@ class NamedGroupLexer(LexerOptions):
         The default for value is the identity function. If value is not callable
         it is returned whatever the text of the token.
         """
-        if not isinstance(value, collections.Callable):
-            def value(_, value=value): return value  # noqa: E731
+        if not callable(value):
+            def value(_, value=value): return value
         if name not in self.tokens:
             self.token_re.append("(?P<%s>%s)" % (name, self.word_bounded(expr)))
             self.tokens[name] = value, True
@@ -241,8 +241,8 @@ class NamedGroupLexer(LexerOptions):
         it is returned whatever the text of the separator. Note that separator
         values are ignored.
         """
-        if not isinstance(value, collections.Callable):
-            def value(_, value=value): return value  # noqa: E731
+        if not callable(value):
+            def value(_, value=value): return value
         if name not in self.tokens:
             self.token_re.append("(?P<%s>%s)" % (name, self.word_bounded(expr)))
             self.tokens[name] = value, False
@@ -316,8 +316,7 @@ class NamedGroupLexer(LexerOptions):
                 else:
                     self.column += len(text)
                 if real_token:
-                    self.cur_token = Token(name, text, value, tok_line, tok_column,
-                                           self.line, self.column, start, stop, prev_stop)
+                    self.cur_token = Token(name, text, value, tok_line, tok_column, self.line, self.column, start, stop, prev_stop)
                     if self.pos > self.max_pos:
                         self.max_pos = self.pos
                         self.last_token = self.cur_token
@@ -385,8 +384,8 @@ class Lexer(NamedGroupLexer):
         The default for value is the identity function. If value is not callable
         it is returned whatever the text of the token.
         """
-        if not isinstance(value, collections.Callable):
-            def value(_, value=value): return value  # noqa: E731
+        if not callable(value):
+            def value(_, value=value): return value
         if name not in self.tokens:
             self.tokens.append((name, self.re_compile(self.word_bounded(expr)), value, True))
         else:
@@ -404,8 +403,8 @@ class Lexer(NamedGroupLexer):
         it is returned whatever the text of the separator. Note that separator
         values are ignored.
         """
-        if not isinstance(value, collections.Callable):
-            def value(_, value=value): return value  # noqa: E731
+        if not callable(value):
+            def value(_, value=value): return value
         if name not in self.tokens:
             self.tokens.append((name, self.re_compile(self.word_bounded(expr)), value, False))
         else:
@@ -462,8 +461,7 @@ class Lexer(NamedGroupLexer):
                 else:
                     self.column += len(text)
                 if real_token:
-                    self.cur_token = Token(name, text, value, tok_line, tok_column, self.line, self.column, start, stop,
-                                           prev_stop)
+                    self.cur_token = Token(name, text, value, tok_line, tok_column, self.line, self.column, start, stop, prev_stop)
                     if self.pos > self.max_pos:
                         self.max_pos = self.pos
                         self.last_token = self.cur_token
@@ -661,8 +659,8 @@ class ContextSensitiveLexer(LexerOptions):
         The default for value is the identity function. If value is not callable
         it is returned whatever the text of the token.
         """
-        if not isinstance(value, collections.Callable):
-            def value(_, value=value): return value  # noqa: E731
+        if not callable(value):
+            def value(_, value=value): return value
         if name not in self.tokens and name not in self.separators:
             self.tokens[name] = self.re_compile(self.word_bounded(expr)), value
         else:
@@ -680,8 +678,8 @@ class ContextSensitiveLexer(LexerOptions):
         it is returned whatever the text of the separator. Note that separator
         values are ignored.
         """
-        if not isinstance(value, collections.Callable):
-            def value(_, value=value): return value  # noqa: E731
+        if not callable(value):
+            def value(_, value=value): return value
         if name not in self.tokens and name not in self.separators:
             self.separators.append((name, self.re_compile(self.word_bounded(expr)), value))
         else:
@@ -759,8 +757,7 @@ class ContextSensitiveLexer(LexerOptions):
                 self.column = len(text) - text.rfind('\n')
             else:
                 self.column += len(text)
-            self.cur_token = Token(name, text, value, tok_line, tok_column, self.line, self.column, start, stop,
-                                   prev_stop)
+            self.cur_token = Token(name, text, value, tok_line, tok_column, self.line, self.column, start, stop, prev_stop)
             if self.pos > self.max_pos:
                 self.max_pos = self.pos
                 self.last_token = self.cur_token
@@ -904,9 +901,8 @@ class ParserMetaClass(type):
 if __python__ == 3:
     exec("class _Parser(metaclass=ParserMetaClass): pass")
 else:
-    class _Parser():
+    class _Parser:
         __metaclass__ = ParserMetaClass
-        pass
 
 
 class Parser(_Parser):
@@ -984,7 +980,7 @@ class Parser(_Parser):
         """
         try:
             self.lexer.start(input)
-            if __python__ == 2 and isinstance(input, str):
+            if __python__ == 2:
                 self.string_prefix = 'ur'
             else:
                 self.string_prefix = 'r'
@@ -1140,9 +1136,8 @@ class VerboseParser(Parser):
             return value
         except WrongToken:
             if self.verbose >= 2:
-                token = Token("???", self.lexer.input[self.lexer.pos:self.lexer.pos + 10].replace('\n', ' '), "???",
-                              self.lexer.line, self.lexer.column, self.lexer.line, self.lexer.column, self.lexer.pos,
-                              self.lexer.pos, self.lexer.pos)
+                token = Token("???", self.lexer.input[self.lexer.pos:self.lexer.pos + 10].replace('\n', ' '), "???", self.lexer.line,
+                              self.lexer.column, self.lexer.line, self.lexer.column, self.lexer.pos, self.lexer.pos, self.lexer.pos)
                 # print(self.token_info(token, "!=", name))
                 sys.stderr.write(self.token_info(token, "!=", name) + "\n")
             raise
@@ -1546,7 +1541,7 @@ class TPGParser(tpg.Parser):
         return and_expr
 
     def ATOM_EXPR(self, ):
-        r""" ``ATOM_EXPR -> SYMBOL | INLINE_TOKEN | code | '\(' OR_EXPR '\)' | 'check' PY_EXPR | 'error' PY_EXPR | '@' PY_EXPR ;`` """  # noqa: E501
+        r""" ``ATOM_EXPR -> SYMBOL | INLINE_TOKEN | code | '\(' OR_EXPR '\)' | 'check' PY_EXPR | 'error' PY_EXPR | '@' PY_EXPR ;`` """
         _p1 = self.lexer.token()
         try:
             try:
@@ -1766,11 +1761,11 @@ class TPGParser(tpg.Parser):
         try:
             sre_parse.parse(eval(self.string_prefix + expr))
         except Exception:
-            raise LexicalError((tok.line, tok.column), "Invalid regular expression: %s (%s)" % (expr, exc()))
+            raise LexicalError((tok.line, tok.column), "Invalid regular expression: %s (%s)" % (expr, sys.exc_info()[1]))
 
     def code_check(self, code, tok):
         try:
-            parser.suite(code.code)
+            compile(code.code, "-", 'exec')
         except Exception:
             erroneous_code = "\n".join(["%2d: %s" % (i + 1, l) for (i, l) in enumerate(code.code.splitlines())])
             raise LexicalError((tok.line, tok.column), "Invalid Python code (%s): \n%s" % (exc, erroneous_code))
@@ -1796,21 +1791,20 @@ class TPGParser(tpg.Parser):
 
         def __init__(self, parser):
             self.parser = parser
-            for name, (values, default) in list(TPGParser.Options.option_dict.items()):
+            for name, (values, default) in TPGParser.Options.option_dict.items():
                 self.set(name, default)
 
         def set(self, name, value):
             try:
                 options, default = TPGParser.Options.option_dict[name]
             except KeyError:
-                opts = list(TPGParser.Options.option_dict.keys())
+                opts = TPGParser.Options.option_dict.keys()
                 self.parser.error("Unknown option (%s). Valid options are %s" % (name, ', '.join(sorted(opts))))
             try:
                 value = options[value]
             except KeyError:
-                values = list(options.keys())
-                self.parser.error("Unknown value (%s). Valid values for %s are %s" % (value, name,
-                                                                                      ', '.join(sorted(values))))
+                values = options.keys()
+                self.parser.error("Unknown value (%s). Valid values for %s are %s" % (value, name, ', '.join(sorted(values))))
             setattr(self, name, value)
 
         def lexer_compile_options(self):
