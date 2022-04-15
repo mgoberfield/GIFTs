@@ -151,8 +151,8 @@ NXT MSG:              BFR 20180912/0000Z=
     os.unlink(fn)
     #
     # Pass write method -- doesn't matter what the name is.
-    _fh = open(os.devnull, 'w')
-    fn = collective1.write(_fh.write)
+    _fh = open(os.devnull, 'wb')
+    fn = collective1.write(_fh)
     assert fn is None
     #
     # Indicate bulletin, when written out, is to be compressed
@@ -216,8 +216,8 @@ $$
     #
     # Insert WMO AHL line
     filename = os.path.join(tempfile.gettempdir(), 'asdfas.txt')
-    _fh = open(filename, 'w')
-    collective.write(_fh.write, header=True)
+    _fh = open(filename, 'wb')
+    collective.write(_fh, header=True)
     _fh.close()
 
     # Verify first line is the WMO AHL
