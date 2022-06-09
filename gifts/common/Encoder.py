@@ -1,4 +1,5 @@
 import logging
+import os
 
 from . import bulletin
 from . import xmlConfig as des
@@ -11,6 +12,9 @@ class Encoder(object):
 
         self.geoLocationsDB = None
         self._Logger = logging.getLogger(__name__)
+        #
+        # Always work in GMT
+        os.environ['TZ'] = 'GMT0'
 
     def encode(self, text, receiptTime=None, **attrs):
         """Parses text to extract the WMO AHL line and one or more TAC forms.
