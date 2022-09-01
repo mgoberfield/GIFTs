@@ -391,6 +391,8 @@ class Decoder(tpg.Parser):
         tms[3] = int(hhmm[0:2])
         tms[4] = int(hhmm[2:4])
         #
+        deu.fix_date(tms)
+        #
         # Provide date/time string
         self.vaa['eruptionDate'] = time.strftime('%Y-%m-%dT%H:%M:00Z', tuple(tms))
 
