@@ -383,6 +383,12 @@ class Decoder(tpg.Parser):
 
         if len(ymd) >= 2:
             tms[2] = int(ymd[-2:])
+            if tms[2] > self.vaa['issueTime']['tms'][2]:
+                tms[1] -= 1
+                if tms[1] < 1:
+                    tms[1] = 12
+                    tms[0] -= 1
+
         if len(ymd) >= 4:
             tms[1] = int(ymd[-4:-2])
         if len(ymd) > 5:
@@ -390,8 +396,6 @@ class Decoder(tpg.Parser):
 
         tms[3] = int(hhmm[0:2])
         tms[4] = int(hhmm[2:4])
-        #
-        deu.fix_date(tms)
         #
         # Provide date/time string
         self.vaa['eruptionDate'] = time.strftime('%Y-%m-%dT%H:%M:00Z', tuple(tms))
