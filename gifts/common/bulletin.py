@@ -3,10 +3,10 @@ try:
 except ValueError:
     pass
 
+import datetime
 import os
 import re
 import sys
-import time
 import uuid
 import xml.etree.ElementTree as ET
 
@@ -21,11 +21,6 @@ class Bulletin(object):
     def __init__(self):
 
         self._children = []
-        if sys.version_info[0] == 3:
-            self.encoding = 'unicode'
-        else:
-            self.encoding = 'UTF-8'
-
         self.xmlFileNamePartA = re.compile(r'A_L[A-Z]{3}\d\d[A-Z]{4}\d{6}([ACR]{2}[A-Z])?_C_[A-Z]{4}')
 
     def __len__(self):
@@ -44,9 +39,13 @@ class Bulletin(object):
         #
         # Pad it with spaces and newlines
         self._addwhitespace()
-        xmlstring = ET.tostring(self.bulletin, encoding=self.encoding, method='xml')
+        if sys.version_info[0] == 3:
+            xmlstring = ET.tostring(self.bulletin, encoding='unicode', method='xml')
+        else:
+            xmlstring = ET.tostring(self.bulletin, encoding='UTF-8', method='xml')
+
         self.bulletin = None
-        return xmlstring.replace(' />', '/>')
+        return xmlstring
 
     def _addwhitespace(self):
         tab = "  "
@@ -118,7 +117,7 @@ class Bulletin(object):
             metInfo = ET.SubElement(self.bulletin, 'meteorologicalInformation')
             metInfo.append(child)
 
-        fn = '{}_{}.xml'.format(self._bulletinId, time.strftime('%Y%m%d%H%M%S'))
+        fn = '{}_{}.xml'.format(self._bulletinId, datetime.datetime.utcnow().strftime('%Y%m%d%H%M%S'))
         if compress:
             fn = '{}.gz'.format(fn)
 
@@ -169,22 +168,30 @@ class Bulletin(object):
 
     def _write(self, obj, header, compress):
 
+        tree = ET.ElementTree(element=self.bulletin)
         if header:
-            result = '{}\n{}'.format(self._wmoAHL, ET.tostring(self.bulletin, encoding=self.encoding, method='xml'))
-        else:
-            result = ET.tostring(self.bulletin, encoding=self.encoding, method='xml')
+            ahl_line = '{}\n'.format(self._wmoAHL)
+            obj.write(ahl_line.encode('UTF-8'))
+        try:
+            tree.write(obj, encoding='UTF-8', xml_declaration=True, method='xml', short_empty_elements=True)
+        except TypeError:
+            tree.write(obj, encoding='UTF-8', xml_declaration=True, method='xml')
 
-        if compress:
-            obj(result.encode('utf-8'))
-        else:
-            obj(result)
+    def _iswriteable(self, obj):
+        try:
+            return obj.writable() and obj.mode == 'wb'
+        except AttributeError:
+            try:
+                return isinstance(obj, file) and obj.mode == 'wb'
+            except NameError:
+                return False
 
     def write(self, obj=None, header=False, compress=False):
         """Writes ElementTree to a file or stream.
 
         obj - if none provided, XML is written to current working directory, or
               character string as directory, or
-              a write() method
+              os.PathLike object such as a file object in 'wb' mode
 
         header - boolean as to whether the WMO AHL line should be included as first line in file. If true,
                  the file is no longer valid XML.
@@ -208,17 +215,13 @@ class Bulletin(object):
         except AttributeError:
             self._export(canBeCompressed)
         #
-        # If the object name is 'write'; Assume it's configured properly for writing
-        try:
-            if obj.__name__ == 'write':
-                self._write(obj, header, canBeCompressed)
-                return None
-
-        except AttributeError:
-            pass
+        # If the object name is writable and mode is correct
+        if self._iswriteable(obj):
+            self._write(obj, header, canBeCompressed)
+            return None
         #
         # Write to current directory if None, or to the directory path provided.
-        if obj is None or os.path.isdir(obj):
+        if obj is None or (isinstance(obj, str) and os.path.isdir(obj)):
             if obj is None:
                 obj = os.getcwd()
 
@@ -231,12 +234,12 @@ class Bulletin(object):
             if canBeCompressed:
                 _fh = gzip.open(fullpath, 'wb')
             else:
-                _fh = open(fullpath, 'w')
+                _fh = open(fullpath, 'wb')
 
-            self._write(_fh.write, header, canBeCompressed)
+            self._write(_fh, header, canBeCompressed)
             _fh.close()
 
             return fullpath
 
         else:
-            raise IOError('First argument is an unsupported type: %s' % str(type(obj)))
+            raise IOError('First argument is an unsupported type: %s' % (str(type(obj))))

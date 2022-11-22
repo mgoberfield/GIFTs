@@ -383,6 +383,12 @@ class Decoder(tpg.Parser):
 
         if len(ymd) >= 2:
             tms[2] = int(ymd[-2:])
+            if tms[2] > self.vaa['issueTime']['tms'][2]:
+                tms[1] -= 1
+                if tms[1] < 1:
+                    tms[1] = 12
+                    tms[0] -= 1
+
         if len(ymd) >= 4:
             tms[1] = int(ymd[-4:-2])
         if len(ymd) > 5:
