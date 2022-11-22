@@ -279,7 +279,7 @@ class Encoder:
         indent3.set('srsDimension', des.srsDimension)
 
         if token['type'] == 'polygon':
-            indent4 = ET.SubElement(indent3, 'gml:polygonPatches')
+            indent4 = ET.SubElement(indent3, 'gml:patches')
             indent5 = ET.SubElement(indent4, 'gml:PolygonPatch')
             indent6 = ET.SubElement(indent5, 'gml:exterior')
             indent7 = ET.SubElement(indent6, 'gml:LinearRing')
@@ -287,7 +287,7 @@ class Encoder:
             indent8.set('count', str(len(token['pnts'])))
             indent8.text = ' '.join(token['pnts'])
         else:
-            indent4 = ET.SubElement(indent3, 'polygonPatches')
+            indent4 = ET.SubElement(indent3, 'patches')
             indent4.set('xmlns', self.NameSpaces['gml'])
             indent5 = ET.SubElement(indent4, 'PolygonPatch')
             indent6 = ET.SubElement(indent5, 'exterior')

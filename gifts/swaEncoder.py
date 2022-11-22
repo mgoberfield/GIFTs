@@ -271,7 +271,7 @@ class Encoder:
         indent3.set('srsName', des.srsName)
         indent3.set('axisLabels', des.axisLabels)
         indent3.set('gml:id', deu.getUUID())
-        indent4 = ET.SubElement(indent3, 'polygonPatches')
+        indent4 = ET.SubElement(indent3, 'patches')
         indent4.set('xmlns', self.NameSpaces['gml'])
         indent5 = ET.SubElement(indent4, 'PolygonPatch')
         indent6 = ET.SubElement(indent5, 'exterior')

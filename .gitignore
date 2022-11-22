@@ -25,3 +25,4 @@ __pycache__
 /.pytest_cache
 driver.py
 sfstns.db
+/wiki/
