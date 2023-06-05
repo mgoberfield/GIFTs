@@ -105,8 +105,8 @@ if __name__ == '__main__':
     parser.add_argument("--noGMLChecks", help="skip GML link checking", action="store_true", default=False)
     parser.add_argument("-k", "--keep", help="do not delete catalog file when validation finishes",
                         action="store_true", default=False)
-    parser.add_argument("-v", "--version", help="IWXXM version major.minor number to validate against, default '3.0'",
-                        type=str, default="3.0")
+    parser.add_argument("-v", "--version", help="IWXXM version major.minor number to validate against, default '2023-1'",
+                        type=str, default="2023-1")
     parser.add_argument("directory", help="directory path containing IWXXM XML documents for validation", type=str)
     cmdargs = parser.parse_args()
 
