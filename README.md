@@ -21,7 +21,7 @@ IWXXM became a WMO standard on 5 November 2020. Met Offices shall disseminate ME
 
 As XML--and creating XML documents--may be unfamiliar technology to those without an IT background, MDL is providing software to assist those in creating the new XML documents based on IWXXM schemas.
 
-It should be understood that the software provided here is a short-term solution as TAC forms of these products will cease to be a ICAO/WMO standard by 2029.
+It should be understood that the software provided here is a short-term solution as TAC forms of these products will eventually cease to be a ICAO/WMO standard.
 
 ## Prequisites
 This software is written entirely in the Python language. Python interpreter v3.9 or better is required.

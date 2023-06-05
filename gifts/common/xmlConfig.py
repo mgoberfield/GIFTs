@@ -6,7 +6,7 @@
 # Author: Mark Oberfield
 # Organization: NOAA/NWS/OSTI/Meteorological Development Laboratory
 # Contact Info: Mark.Oberfield@noaa.gov
-# Date: 16 January 2020
+# Date: 5 June 2023
 #
 import os
 # -----------------------------------------------------------------------------------
@@ -33,8 +33,8 @@ TranslationCentreDesignator = ''
 # -----------------------------------------------------------------------------------
 #
 # IWXXM versioning
-_iwxxm = '2021-2'
-_release = '2021-2'
+_iwxxm = '2023-1'
+_release = '2023-1'
 #
 IWXXM_URI = 'http://icao.int/iwxxm/%s' % _iwxxm
 IWXXM_URL = 'https://schemas.wmo.int/iwxxm/%s/iwxxm.xsd' % _release

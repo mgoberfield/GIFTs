@@ -119,7 +119,7 @@ class Dispatcher(FileSystemEventHandler):
         else:
             self.ext = 'xml'
 
-    def on_modified(self, event):
+    def on_closed(self, event):
         """If a new file saved in monitored directory, read it."""
 
         if not event.is_directory:
