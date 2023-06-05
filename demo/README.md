@@ -3,12 +3,12 @@
 To illustrate the use of GIFTs, this subdirectory contains two simple python programs.
 
 ### demo1.py
-demo1.py makes use of a small aerodrome database and sample files that we'll use to translate the TAC forms into IWXXM documents.  This demonstration program requires the Python Tk/Tcl package which is readily available with Python v3.8. 
+demo1.py makes use of a small aerodrome database and sample files that we'll use to translate the TAC forms into IWXXM documents.  This demonstration program requires the Python Tk/Tcl package which is readily available with Python v3.9+. 
 
     $ cd GIFTs/demo
     $ demo1.py
 
-If the GIFTs package installation was successful, you should see a small GUI appear on your screen<sup>1</sup>, the 'Generate IWXXM From TAC Demonstrator', like so,
+If the GIFTs package installation was successful, you should see a small GUI appear on your screen, the 'Generate IWXXM From TAC Demonstrator', like so,
 
 ![Initial state](images/demo1-1.png)
 
@@ -30,25 +30,23 @@ means at the point of the caret, '^', the decoder stopped because it was expecti
 
 The second observation with a decoding problem:
 
-    METAR LGKL 110120Z 00000KT 9999 SCTO3O 18/16 Q1012
+    METAR LGKL 110120Z 00000KT 9999 SCT03O 18/16 Q1012
                                     ^
     Expecting directional minimum visibility or runway visual range or precipitation or obstruction to vision or precipitation in the vicinity or NCD, NSC or vertical visibility or cloud layer
  
-The caret indicates that the decoder doesn't understand the scattered cloud layer at 3,000 ft. Do you see why? There are typos: a capital O were used in place of zeroes, 0.  For some fonts, the difference between the two characters are subtle. This illustrates that the decoder must understand everything in the TAC report in order to properly encode the data into XML. By fixing these typos, the IWXXM message for aerodrome LGKL can be created and the LGKL TAC can now be decoded cleanly by others as well.
+The caret indicates that the decoder doesn't understand the scattered cloud layer at 3,000 ft. Do you see why? There are typos: a capital O was used in place of a zero, 0.  For some fonts, the difference between the two characters are subtle. This illustrates that the decoder must understand everything in the TAC report in order to properly encode the data into XML. By fixing these typos, the IWXXM message for aerodrome LGKL can be created and the LGKL TAC can now be decoded cleanly by others as well.
 
 The remaining METAR reports were decoded without issues and their data encoded into IWXXM and packaged up in an Meteorological Bulletin.
 
 The Encoder class requires that the input file contain one WMO AHL line, appropriate for the TAC forms within it. Here are the regular expressions used to identify the WMO AHL line for particular TAC forms:
 
     S(A|P)[A-Z][A-Z]\d\d\s+[A-Z]{4}\s+\d{6}(\s+[ACR]{2}[A-Z])? # for METAR/SPECI
-    FN\w\w\d\d\s+[A-Z]{4}\s+\d{6}(\s+[ACR]{2}[A-Z])? # Space Weather Advisories
     FK\w\w\d\d\s+[A-Z]{4}\s+\d{6}(\s+[ACR]{2}[A-Z])? # Tropical Cyclone Advisory
     F(C|T)\w\w\d\d\s+[A-Z]{4}\s+\d{6}(\s+[ACR]{2}[A-Z])? # TAF
     FV\w\w\d\d\s+[A-Z]{4}\s+\d{6}(\s+[ACR]{2}[A-Z])? # Volcanic Ash Advisory
 And for capturing the individual TAC forms:
 
     ^(?:METAR|SPECI)\s+(?:COR\s+)?[A-Z][A-Z0-9]{3}\s.+?=
-    ^SWX ADVISORY.+
     ^TC ADVISORY.+
     ^TAF(?:\s+(?:AMD|COR|CC[A-Z]|RTD))?\s+[A-Z]{4}.+?=
     ^VA ADVISORY.+
@@ -63,11 +61,10 @@ This program runs as a UNIX/Linux [daemon](https://en.wikipedia.org/wiki/Daemon_
 
     $ pip install watchdog
 
-The associated configuration file, `iwxxmd.cfg`, is well documented internally and should suffice in getting the IWXXM daemon up and running. Once the configuration file is properly set up, to start the daemon, just issue the command:
+The associated configuration template file, `iwxxmd.cfg`, is well documented internally and should suffice in getting a IWXXM daemon up and running. Once the configuration file for a particular product is created, start the daemon. For instance,
 
-    $ iwxxmd.py iwxxmd.cfg
+    $ iwxxmd.py metar.cfg
 
-Any misconfiguration will result in an error message being written to the console and the daemon will not start. Like most UNIX/Linux daemons, the process can run indefinitely in the background. Should the daemon run into any difficulties, it will write messages to its log file.  The log file name format follows this format `<product>_iwxxmd_<DOW>` where `<product>` is one of `'metar'`, `'swa'`, `'taf'`, `'tca'`, or `'vaa'`, and `<DOW>` is the abbreviated day of the week, e.g. `'vaa_iwxxmd_Mon'`. The daemon will 'ping' to the log file every hour to indicate that it is 'alive'. While active, the daemon will report the files read in and the files written out. When midnight arrives, the daemon will switch to a different log file. Thus, a maximum of seven log files are created with each file being overwritten after 6 days.
+By copying the template file with new names as needed, several IWXXM daemons can run simultaneously.
 
--------------------
-<sup>1</sup>When running the demo1.py program for the first time, it may take several minutes before the GUI appears. This is due to the Skyfield module downloading a large ephemris file from the JPL website. To disable this activity, comment out (or remove) lines 104-105 in demo1.py which initializes the Space Weather Advisory Encoder.
+Any misconfiguration will result in an error message being written to the console and the daemon will not start. Like most UNIX/Linux daemons, the process can run indefinitely in the background. Should the daemon run into any difficulties, it will write messages to its log file.  The log file name format follows this format `<product>_iwxxmd_<DOW>` where `<product>` is one of `'metar'`, `'swa'`, `'taf'`, `'tca'`, or `'vaa'`, and `<DOW>` is the abbreviated day of the week, e.g. `'metar_iwxxmd_Mon'`. The daemon will 'ping' to the log file every hour to indicate that it is 'alive'. While active, the daemon will report the files read in and the files written out. When midnight arrives, the daemon will switch to a different log file. Thus, a maximum of seven log files are created with each file being overwritten after 6 days.
