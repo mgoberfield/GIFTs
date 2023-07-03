@@ -821,6 +821,11 @@
       </skos:Concept>
     </skos:member>
     <skos:member>
+      <skos:Concept rdf:about="http://codes.wmo.int/306/4678/-SS">
+        <rdfs:label xml:lang="en">Light sandstorm</rdfs:label>
+      </skos:Concept>
+    </skos:member>
+    <skos:member>
       <skos:Concept rdf:about="http://codes.wmo.int/306/4678/SS">
         <rdfs:label xml:lang="en">Sandstorm</rdfs:label>
       </skos:Concept>
@@ -1192,6 +1197,11 @@
       </skos:Concept>
     </skos:member>
     <skos:member>
+      <skos:Concept rdf:about="http://codes.wmo.int/306/4678/-DS">
+        <rdfs:label xml:lang="en">Light duststorm</rdfs:label>
+      </skos:Concept>
+    </skos:member>
+    <skos:member>
       <skos:Concept rdf:about="http://codes.wmo.int/306/4678/DS">
         <rdfs:label xml:lang="en">Duststorm</rdfs:label>
       </skos:Concept>
@@ -1219,6 +1229,11 @@
     <skos:member>
       <skos:Concept rdf:about="http://codes.wmo.int/306/4678/FC">
         <rdfs:label xml:lang="en">Funnel cloud(s) (tornado or water-spout)</rdfs:label>
+      </skos:Concept>
+    </skos:member>
+    <skos:member>
+      <skos:Concept rdf:about="http://codes.wmo.int/306/4678/+FC">
+        <rdfs:label xml:lang="en">Well-developed funnel cloud(s) (tornado or water-spout)</rdfs:label>
       </skos:Concept>
     </skos:member>
     <skos:member>
