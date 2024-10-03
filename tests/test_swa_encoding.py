@@ -7,6 +7,7 @@ import gifts.common.xmlConfig as des
 SWAEncoder = SWAE.Encoder()
 decoder = SD.Decoder()
 encoder = SE.Encoder()
+des.TRANSLATOR = True
 
 first_siblings = ['issueTime', 'issuingSpaceWeatherCentre', 'advisoryNumber', 'phenomenon', 'phenomenon', 'analysis',
                   'analysis', 'analysis', 'analysis', 'analysis', 'remarks', 'nextAdvisoryTime']
@@ -213,9 +214,35 @@ NXT ADVISORY:       WILL BE ISSUED BY 20161108/0100Z"""
     assert len(bulletin) == 1
 
 
+def test_multipleAdvisoryStrings():
+
+    test = """FNXX01 KWNP 080106
+SWX ADVISORY
+STATUS:             TEST
+DTG:                20161108/0100Z
+SWXC:               DONLON
+ADVISORY NR:        2016/1
+NR RPLC:            2015/325
+SWX EFFECT:         HF COM SEV
+FCST SWX:           08/0100Z DAYLIGHT SIDE ABV FL400
+FCST SWX +6 HR:     08/0700Z DAYLIGHT SIDE FL350-500
+FCST SWX +12 HR:    08/1300Z DAYLIGHT SIDE
+FCST SWX +18 HR:    08/1900Z S4530 E01545 - S4100 W01300 - S3230 W02530 - S2930 W03715 - S3630 W04630 - S3815 W04445 -
+                             S3345 E03800 - S3330 W03230 - S3800 W02330 - S4530 W01545
+FCST SWX +24 HR:    09/0100Z N4530 E01545 - N3800 E02330 - N3330 E03230 - N3345 E03800 - N3815 E04445 - N3630 E04630 -
+                             N2930 E03715 - N3230 E02530 - N4100 E01300 - N4530 E01545
+RMK:                PERIODIC HF COM ABSORPTION OBS AND LIKELY TO CONT IN THE NEAR TERM. CMPL AND PERIODIC LOSS OF HF ON
+THE SUNLIT SIDE OF THE EARTH EXP. CONT HF COM DEGRADATION LIKELY OVER THE NXT 7 DAYS. SEE WWW.SPACEWEATHERPROVIDER.WEB
+THIS IS A TEST SWX ADVISORY.
+NXT ADVISORY:       20161108/0700Z="""
+    result = decoder(test)
+    assert 'err_msg' not in result
+
+
 if __name__ == '__main__':
 
     test_swaFailureModes()
     test_swaTest()
     test_swaExercise()
     test_swaNormal()
+    test_multipleAdvisoryStrings()

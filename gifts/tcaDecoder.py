@@ -84,7 +84,7 @@ class Decoder(tpg.Parser):
                                 'cfpsn': 'Forecast Position', 'cfwnd': 'Forecast Maximum Wind Speed', 'rmk': 'Remarks',
                                 'nextdtg': 'Next advisory issuance time or NO MSG EXP'}
 
-        self.header = re.compile(r'.*(?=TC ADVISORY)', re.DOTALL)
+        self.header = re.compile(r'.*?(?=TC ADVISORY)', re.DOTALL)
 
         self._Logger = logging.getLogger(__name__)
         return super(Decoder, self).__init__()

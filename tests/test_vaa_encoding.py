@@ -881,6 +881,36 @@ NXT ADVISORY: NO FURTHER ADVISORIES
     assert element.get('nilReason') == codes[des.NIL][des.NA][0]
 
 
+def test_multipleAdvisoryStrings():
+
+    import gifts.vaaDecoder as vD
+    decoder = vD.Decoder()
+
+    test = """FVXX27 KNES 191645
+VA ADVISORY
+DTG: 20240319/1645Z
+VAAC: WASHINGTON
+VOLCANO: TEST 999999
+PSN: N3700 W07700
+AREA: US
+SUMMIT ELEV: 32805 FT (9999 M)
+ADVISORY NR: 2024/001
+INFO SOURCE: TEST
+ERUPTION DETAILS: TEST AT 19/1700Z
+OBS VA DTG: 19/1645Z
+OBS VA CLD: VA NOT IDENTIFIABLE FROM SATELLITE
+DATA WIND FL100 300/10KTS
+FCST VA CLD +6HR: 19/2300Z NO VA EXP
+FCST VA CLD +12HR: 20/0500Z NO VA EXP
+FCST VA CLD +18HR: 20/1100Z NO VA EXP
+RMK: THIS IS A VA ADVISORY TEST MSG. MWO TAHITI
+SHOULD NOW ISSUE A SIGMET TEST MSG FOR VA
+ADVISORY IF RECEIVED. ...KIBLER
+NXT ADVISORY:  NO FURTHER ADVISORIES
+"""
+    result = decoder(test)
+    assert 'err_msg' not in result
+
 if __name__ == '__main__':
 
     test_vaaFailureModes()
@@ -891,3 +921,4 @@ if __name__ == '__main__':
     test_vaaNormal()
     test_unknowns()
     test_resuspendedash()
+    test_multipleAdvisoryStrings()
