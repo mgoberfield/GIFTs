@@ -102,7 +102,7 @@ class Decoder(tpg.Parser):
                                 'fcsthr': 'FCST SWX +nn HR', 'rmk': 'RMK:',
                                 'nextdtg': 'Next advisory issuance date/time', 'noadvisory': 'NO FURTHER ADVISORIES'}
 
-        self.header = re.compile(r'.*(?=SWX ADVISORY)', re.DOTALL)
+        self.header = re.compile(r'.*?(?=SWX ADVISORY)', re.DOTALL)
 
         setattr(self, 'lat_band', self.add_region)
         setattr(self, 'point', self.add_region)

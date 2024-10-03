@@ -115,7 +115,7 @@ class Decoder(tpg.Parser):
                                 'rmk': 'Remarks', 'nextdtg': 'Next VAA issuance time',
                                 '_tok_2': 'dash character (-)', '_tok_3': 'dash character (-)'}
 
-        self.header = re.compile(r'.*(?=VA ADVISORY)', re.DOTALL)
+        self.header = re.compile(r'.*?(?=VA ADVISORY)', re.DOTALL)
         self._reWinds = re.compile(r'(WINDS?)?\s+(SFC|FL(?P<bottom>\d{3}))(/((FL)?(?P<top>\d{3})))?\s+(?P<dir>VRB|\d{3})/?(?P<spd>\d{1,3})(-\d{2,3})?(?P<uom>MPS|KT)')  # noqa: E501
 
         self._detail_date = re.compile(r'[\d/]{4,13}Z')
