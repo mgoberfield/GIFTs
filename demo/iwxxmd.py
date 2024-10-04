@@ -112,16 +112,21 @@ class Dispatcher(FileSystemEventHandler):
         self.delete_flag = delete_flag
         self.header = header
         self.outputDirectory = outputDirectory
-        self.bulletin = gifts.bulletin.Bulletin()
 
         if self.header:
             self.ext = 'txt'
         else:
             self.ext = 'xml'
 
+        self.ticks = 0
+    #
+    # If you find that the daemon misses incoming TAC files, consider changing this function name from 'on_closed' to
+    # 'on_modified'.
+
     def on_closed(self, event):
         """If a new file saved in monitored directory, read it."""
 
+        self.ticks = 0
         if not event.is_directory:
             try:
                 #
@@ -149,13 +154,13 @@ class Dispatcher(FileSystemEventHandler):
                 bulletin = self.encoder.encode(tac)
                 iwxxm_msg_cnt = len(bulletin)
                 if iwxxm_msg_cnt:
-                    self.logger.debug(f'{iwxxm_msg_cnt} IWXXM products generated from {event.src_path} contents')
+                    self.logger.info(f'{iwxxm_msg_cnt} IWXXM documents generated from file {event.src_path} contents')
                     bulletin.write(self.outputDirectory, header=self.header)
 
                 del bulletin
 
             except Exception:
-                self.logger.exception('Unable to convert TAC to XML. Reason:\n')
+                self.logger.exception(f'Unable to convert TAC {event.src_path} to IWXXM. Reason:\n')
 
 
 class Monitor(Daemon):
@@ -166,6 +171,10 @@ class Monitor(Daemon):
         super(Monitor, self).__init__()
 
         self.logger = logging.getLogger(__name__)
+        #
+        # Don't write files into the input directory
+        if os.path.realpath(inputDirectory) == os.path.realpath(outputDirectory):
+            raise SystemExit('Input and output directories should be different')
         #
         # Check to make sure the monitor can read these directories and modify their contents
         if not os.path.exists(inputDirectory) or not os.path.isdir(inputDirectory) or \
@@ -182,8 +191,11 @@ class Monitor(Daemon):
         # Start the observer with the the directory to watch and what to do when
         # there's activity in the directory
         self.observer = Observer()
-        self.observer.schedule(self.dispatcher, inputDirectory, False)
         self.inputDirectory = inputDirectory
+        self.observer.schedule(self.dispatcher, self.inputDirectory, recursive=False)
+        #
+        # Toggle logging levels (INFO<=>DEBUG) if a USR1 signal is received
+        signal.signal(signal.SIGUSR1, self.toggleLoggingLevel)
         #
         # Clean up when termination signal is received
         signal.signal(signal.SIGTERM, self.shutdown)
@@ -192,14 +204,37 @@ class Monitor(Daemon):
 
         self.logger.info(f'Begin monitoring {self.inputDirectory}. . .')
         self.observer.start()
-        t = 0
-
+        #
+        # Begin watch . . .
         while True:
+
             time.sleep(0.1)
-            t += 1
-            if t >= 36000:
-                self.logger.info('Aliveness check . . .')
-                t = 0
+            self.dispatcher.ticks += 1
+            #
+            # After a period of no activity by the observer, check it . . .
+            if self.dispatcher.ticks >= 600:
+
+                self.dispatcher.ticks = 0
+                if not self.observer.is_alive():
+                    #
+                    # If observer is no longer alive, spawn a new one
+                    try:
+                        self.logger.debug('Current observer is no longer responding to incoming files.')
+                        self.observer.stop()
+                        self.observer.join()
+
+                        self.logger.debug('Creating new observer . . .')
+                        self.observer = Observer()
+                        self.observer.schedule(self.dispatcher, self.inputDirectory, recursive=False)
+                        self.observer.start()
+
+                    except Exception as err:
+                        self.logger.fatal(str(err))
+
+    def toggleLoggingLevel(self, signum, frame):
+
+        self.logger.setLevel(logging.DEBUG if self.logger.getEffectiveLevel() == logging.INFO else logging.INFO)
+        self.logger.info(f'Changing logging level to {self.logger.getEffectiveLevel()}')
 
     def shutdown(self, signum, frame):
 
@@ -268,30 +303,24 @@ if __name__ == '__main__':
 
     logger = {
         'version': 1,
-        'disable_existing_loggers': False,
 
         'formatters': {
             'default': {
-                'class': 'logging.Formatter',
-                'format': '%(asctime)s %(levelname)-5s %(process)5d %(module)s: %(message)s'
+                'format': '%(asctime)s %(levelname)-5s %(process)5d %(module)s: %(message)s',
+                'style': '%',
+                'validate': True
             },
         },
 
         'handlers': {
             'file': {
-                'level': 'INFO',
                 'formatter': 'default',
-                '()': 'iwxxmd.DOWFileHandler',
+                '()': DOWFileHandler,
                 'directory': f'{logfileDirectory}',
                 'basename': f'{product}_iwxxmd'
             },
         },
-        'loggers': {
-            'gifts': {
-                'propogate': True,
-                'handlers': ['file'],
-            }
-        },
+
         'root': {
             'level': 'INFO',
             'handlers': ['file']
