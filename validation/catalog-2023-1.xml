@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE catalog PUBLIC "-//OASIS//DTD XML Catalogs V1.1//EN" "http://www.oasis-open.org/committees/entity/release/1.1/catalog.dtd">
+<catalog xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog">
+    
+  <!-- IWXXM template - IWXXM_VERSION to be replaced by the appropriate IWXXM version -->
+  <rewriteSystem systemIdStartString="http://schemas.wmo.int/iwxxm/2023-1" rewritePrefix="/home/mark.oberfield/Repositories/GIFTs/validation/schemas/2023-1"/>
+
+  <!-- Other non-IWXXM schemas from schemas.wmo.int -->
+  <rewriteSystem systemIdStartString="http://schemas.wmo.int" rewritePrefix="/home/mark.oberfield/Repositories/GIFTs/validation/externalSchemas/schemas.wmo.int"/>
+
+  <!-- OGC/ISO Schemas -->
+  <rewriteSystem systemIdStartString="http://schemas.opengis.net" rewritePrefix="/home/mark.oberfield/Repositories/GIFTs/validation/externalSchemas/schemas.opengis.net"/>
+
+  <!-- AIXM 5 -->
+  <rewriteSystem systemIdStartString="http://www.aixm.aero/schema" rewritePrefix="/home/mark.oberfield/Repositories/GIFTs/validation/externalSchemas/aero/aixm"/>
+
+  <!-- W3C -->
+  <rewriteSystem systemIdStartString="http://www.w3.org" rewritePrefix="/home/mark.oberfield/Repositories/GIFTs/validation/externalSchemas/org/w3c"/>
+  
+</catalog>
