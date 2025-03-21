@@ -52,7 +52,12 @@ __email__ = 'cdelord.fr'
 __url__ = 'http://cdelord.fr/tpg/'
 
 import re
-import sre_parse
+
+try:
+    sre_parse = re._parser
+except AttributeError:
+    import sre_parse
+
 import sys
 
 # Python 2/3 compatibility
