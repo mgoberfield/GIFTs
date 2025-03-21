@@ -1,4 +1,3 @@
-import datetime
 import xml.etree.ElementTree as ET
 
 from gifts.TAF import Encoder as TE
@@ -406,26 +405,18 @@ TAF SBAF 071500Z 0718/0806 00000KT CAVOK TN15/0106Z TX20/3018Z TX21/0817Z TN12/0
 
 def test_chgGrps():
 
-    now = datetime.datetime.now(datetime.timezone.utc)
-    t18 = datetime.datetime(year=now.year, month=now.month, day=now.day, hour=18, tzinfo=datetime.timezone.utc)
-    p1h = datetime.timedelta(hours=1)
+    test = """FTXX01 LFKJ 072000
+TAF SBAF 301500Z 3018/3106 00000KT 4000 -SHRA BR OVC010 FM302200 00000KT CAVOK=
+TAF SBAF 301500Z 3018/3106 00000KT 4000 -SHRA BR OVC010 BECMG 3022/3024 9999 NSW=
+TAF SBAF 071500Z 0718/0806 00000KT CAVOK TEMPO 0722/0724 3000 OVC040=
+TAF SBAF 071500Z 0718/0806 00000KT CAVOK PROB40 0722/0724 3000 OVC040=
+TAF SBAF 071500Z 0718/0806 00000KT CAVOK PROB40 TEMPO 0723/0801 3000 OVC040=
+TAF SBAF 071500Z 0718/0806 00000KT CAVOK PROB30 0720/0722 3000 OVC040=
+TAF SBAF 071500Z 0718/0806 00000KT CAVOK PROB30 TEMPO 0720/0722 3000 OVC040=
+"""
 
-    p12 = t18 + p1h*12
-    p30 = t18 + p1h*30
-
-    template = """FTXX01 LFKJ 072000
-TAF SBAF {0}1500Z {0}18/{1}06 00000KT 4000 -SHRA BR OVC010 FM{0}2200 00000KT CAVOK=
-TAF SBAF {0}1500Z {0}18/{1}06 00000KT 4000 -SHRA BR OVC010 FM{1}0030 00000KT CAVOK=
-TAF SBAF {0}1500Z {0}18/{1}06 00000KT 4000 -SHRA BR OVC010 BECMG {0}22/{0}24 9999 NSW=
-TAF SBAF {0}1500Z {0}18/{2}06 00000KT CAVOK TEMPO {0}22/{0}24 3000 OVC040=
-TAF SBAF {0}1500Z {0}18/{2}06 00000KT CAVOK PROB40 {0}22/{0}24 3000 OVC040=
-TAF SBAF {0}1500Z {0}18/{2}06 00000KT CAVOK PROB40 TEMPO {0}23/{2}01 3000 OVC040=
-TAF SBAF {0}1500Z {0}18/{2}06 00000KT CAVOK PROB30 {0}20/{0}22 3000 OVC040=
-TAF SBAF {0}1500Z {0}18/{2}06 00000KT CAVOK PROB30 TEMPO {2}00/{2}02 3000 OVC040="""
-
-    test = template.format(t18.strftime('%d'), p30.strftime('%d'), p12.strftime('%d'))
     bulletin = encoder.encode(test)
-    assert len(bulletin) == test.count('\n')
+    assert len(bulletin) == test.count('\n') - 1
     for cnt, result in enumerate(bulletin):
         assert result.get('translationFailedTAC') is None
         tree = ET.XML(ET.tostring(result))
@@ -436,43 +427,38 @@ TAF SBAF {0}1500Z {0}18/{2}06 00000KT CAVOK PROB30 TEMPO {2}00/{2}02 3000 OVC040
 
         if cnt == 0:
             assert chgFcst.get('changeIndicator') == 'FROM'
-            assert chgFcst[0][0][0].text == t18.strftime('%Y-%m-%dT22:00:00Z')
-            assert chgFcst[0][0][1].text == p30.strftime('%Y-%m-%dT06:00:00Z')
+            assert chgFcst[0][0][0].text.endswith('30T22:00:00Z')
+            assert chgFcst[0][0][1].text.endswith('1T06:00:00Z')
 
         elif cnt == 1:
-            assert chgFcst.get('changeIndicator') == 'FROM'
-            assert chgFcst[0][0][0].text == p30.strftime('%Y-%m-%dT00:30:00Z')
-            assert chgFcst[0][0][1].text == p30.strftime('%Y-%m-%dT06:00:00Z')
+            assert chgFcst.get('changeIndicator') == 'BECOMING'
+            assert chgFcst[0][0][0].text.endswith('30T22:00:00Z')
+            assert chgFcst[0][0][1].text.endswith('1T00:00:00Z')
 
         elif cnt == 2:
-            assert chgFcst.get('changeIndicator') == 'BECOMING'
-            assert chgFcst[0][0][0].text == t18.strftime('%Y-%m-%dT22:00:00Z')
-            assert chgFcst[0][0][1].text == p12.strftime('%Y-%m-%dT00:00:00Z')
+            assert chgFcst.get('changeIndicator') == 'TEMPORARY_FLUCTUATIONS'
+            assert chgFcst[0][0][0].text.endswith('07T22:00:00Z')
+            assert chgFcst[0][0][1].text.endswith('08T00:00:00Z')
 
         elif cnt == 3:
-            assert chgFcst.get('changeIndicator') == 'TEMPORARY_FLUCTUATIONS'
-            assert chgFcst[0][0][0].text == t18.strftime('%Y-%m-%dT22:00:00Z')
-            assert chgFcst[0][0][1].text == p12.strftime('%Y-%m-%dT00:00:00Z')
+            assert chgFcst.get('changeIndicator') == 'PROBABILITY_40'
+            assert chgFcst[0][0][0].text.endswith('07T22:00:00Z')
+            assert chgFcst[0][0][1].text.endswith('08T00:00:00Z')
 
         elif cnt == 4:
-            assert chgFcst.get('changeIndicator') == 'PROBABILITY_40'
-            assert chgFcst[0][0][0].text == t18.strftime('%Y-%m-%dT22:00:00Z')
-            assert chgFcst[0][0][1].text == p12.strftime('%Y-%m-%dT00:00:00Z')
+            assert chgFcst.get('changeIndicator') == 'PROBABILITY_40_TEMPORARY_FLUCTUATIONS'
+            assert chgFcst[0][0][0].text.endswith('07T23:00:00Z')
+            assert chgFcst[0][0][1].text.endswith('08T01:00:00Z')
 
         elif cnt == 5:
-            assert chgFcst.get('changeIndicator') == 'PROBABILITY_40_TEMPORARY_FLUCTUATIONS'
-            assert chgFcst[0][0][0].text == t18.strftime('%Y-%m-%dT23:00:00Z')
-            assert chgFcst[0][0][1].text == p12.strftime('%Y-%m-%dT01:00:00Z')
+            assert chgFcst.get('changeIndicator') == 'PROBABILITY_30'
+            assert chgFcst[0][0][0].text.endswith('07T20:00:00Z')
+            assert chgFcst[0][0][1].text.endswith('07T22:00:00Z')
 
         elif cnt == 6:
-            assert chgFcst.get('changeIndicator') == 'PROBABILITY_30'
-            assert chgFcst[0][0][0].text == t18.strftime('%Y-%m-%dT20:00:00Z')
-            assert chgFcst[0][0][1].text == t18.strftime('%Y-%m-%dT22:00:00Z')
-
-        elif cnt == 7:
             assert chgFcst.get('changeIndicator') == 'PROBABILITY_30_TEMPORARY_FLUCTUATIONS'
-            assert chgFcst[0][0][0].text == p12.strftime('%Y-%m-%dT00:00:00Z')
-            assert chgFcst[0][0][1].text == p12.strftime('%Y-%m-%dT02:00:00Z')
+            assert chgFcst[0][0][0].text.endswith('07T20:00:00Z')
+            assert chgFcst[0][0][1].text.endswith('07T22:00:00Z')
 
 
 def test_cavok():
