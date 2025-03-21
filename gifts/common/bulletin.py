@@ -117,7 +117,7 @@ class Bulletin(object):
             metInfo = ET.SubElement(self.bulletin, 'meteorologicalInformation')
             metInfo.append(child)
 
-        fn = '{}_{}.xml'.format(self._bulletinId, datetime.datetime.utcnow().strftime('%Y%m%d%H%M%S'))
+        fn = '{}_{}.xml'.format(self._bulletinId, datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%d%H%M%S'))
         if compress:
             fn = '{}.gz'.format(fn)
 
