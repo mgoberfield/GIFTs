@@ -359,7 +359,7 @@ class Decoder(tpg.Parser):
 
         tms[2:4] = eday, ehour
         if eday < sday:
-            tms[1] += 1
+            tms[0], tms[1] = (tms[0], tms[1]+1) if tms[1] < 12 else (tms[0]+1, 1)
 
         d.update({'from': t, 'to': time.mktime(tuple(tms))})
 
@@ -379,7 +379,7 @@ class Decoder(tpg.Parser):
         t = time.mktime(tuple(tms))
         tms[2:4] = eday, ehour
         if eday < sday:
-            tms[1] += 1
+            tms[0], tms[1] = (tms[0], tms[1]+1) if tms[1] < 12 else (tms[0]+1, 1)
 
         d.update({'from': t, 'to': time.mktime(tuple(tms))})
 
