@@ -138,7 +138,7 @@ class simpleGUI(object):
             bulletin.write()
 
             self.ent_xml.delete(0, tk.END)
-            self.ent_xml.insert(0, bulletin.get_bulletinIdentifier())
+            self.ent_xml.insert(0, bulletin._internalBulletinId)
             self.ent_xml['state'] = tk.NORMAL
 
         self.btn_gift['state'] = tk.NORMAL
@@ -151,7 +151,7 @@ class simpleGUI(object):
 
         self.ent_tac.delete(0, tk.END)
         self.ent_tac.insert(0, filepath)
-        self.btn_tac['state'] = tk.NORMAL
+        return 'break'
 
     def clear_fields(self, *args):
 
