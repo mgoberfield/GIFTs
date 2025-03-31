@@ -341,6 +341,10 @@ class Decoder(tpg.Parser):
         mday, hour, minute = int(s[2:4]), int(s[4:6]), int(s[6:8])
         tms = list(time.gmtime(self._taf['vtime']['from']))
         tms[2:5] = mday, hour, minute
+        t = time.mktime(tuple(tms))
+        if t < self._taf['vtime']['from']:
+            deu.fix_date(tms)
+
         d.update({'from': time.mktime(tuple(tms)), 'to': self._taf['vtime']['to']})
 
     def ttime(self, s):
