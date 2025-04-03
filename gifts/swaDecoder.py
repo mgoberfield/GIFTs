@@ -1,13 +1,3 @@
-#
-# Name: swaDecoder.py
-#
-# Purpose: To decode, in its entirety, the Space Weather Advisory traditional alphanumeric code
-#          as described in the Meteorological Service for International Air Navigation, Annex 3
-#          to the Convention on International Civil Aviation.
-#
-# Author: Mark Oberfield
-# Organization: NOAA/NWS/OSTI/MDL/WIAB
-#
 import copy
 import itertools
 import logging
@@ -20,9 +10,21 @@ import skyfield
 from skyfield.api import Loader
 from skyfield.toposlib import wgs84
 
+from geographiclib.geodesic import Geodesic
+
 from .common import tpg
 from .common import xmlConfig as des
 from .common import xmlUtilities as deu
+#
+# Name: swaDecoder.py
+#
+# Purpose: To decode, in its entirety, the Space Weather Advisory traditional alphanumeric code
+#          as described in the Meteorological Service for International Air Navigation, Annex 3
+#          to the Convention on International Civil Aviation.
+#
+# Author: Mark Oberfield
+# Organization: NOAA/NWS/OSTI/MDL/WIAB
+#
 
 
 class Decoder(tpg.Parser):
@@ -36,17 +38,19 @@ class Decoder(tpg.Parser):
     token exercise: 'STATUS:\s*EXER\w{0,4}' ;
     token dtg: 'DTG:\s*(?P<date>\d{8})/(?P<time>\d{4})Z' ;
     token centre: 'SWXC:\s*(\w+)' ;
+    token phenomena: 'SWX EFFECT:\s*(RADIATION|GNSS|(HF\s+|SAT)COM)' ;
     token advnum: 'ADVISORY NR:\s*(\d{4}/\d{1,4})' ;
-    token prevadvsry: 'NR RPLC:\s*(\d{4}/\d{1,4})' ;
-    token phenomena: 'SWX EFFECT:\s*(RADIATION|GNSS|(HF\s+|SAT)COM)\s+(MOD|SEV)\s*(AND\s+(RADIATION|GNSS)\s+(MOD|SEV))?' ; # noqa: E501
+    token prevadvsry: 'NR RPLC:([.\s\d\/]+)' ;
     token init: '(OBS|FCST) SWX:' ;
     token fcsthr: 'FCST SWX \+?(?P<fhr>\d{1,2})\s*HR:' ;
     token timestamp: '\d{2}/\d{4}Z' ;
-    token daylight: 'DAY(LIGHT)?\s+SIDE' ;
+    token intensity: '(MOD|SEV)' ;
+    token day: 'DAYSIDE' ;
+    token night: 'NIGHTSIDE' ;
     token lat_band: '(H|M)(N|S)H' ;
-    token point: '(N|S)\d{2,4}\s+(E|W)\d{3,5}' ;
+    token point: '(N|S)\d{2}\s+(E|W)\d{3}' ;
     token equator: 'EQ(N|S)' ;
-    token longitudes: '(E|W)\d{3,5}\s*-\s*(E|W)\d{3,5}' ;
+    token longitudes: '(E|W)\d{3}\s*-\s*(E|W)\d{3}' ;
     token fltlvls: '(ABV\s+FL\d{3})|(FL\d{3}\s*-\s*(FL)?\d{3})' ;
     token noos: 'NO\s+SWX\s+EXP' ;
     token notavail: 'NOT\s+AVBL' ;
@@ -57,10 +61,10 @@ class Decoder(tpg.Parser):
     START/d -> SWX $ d=self.finish() $ ;
 
     SWX -> 'SWX ADVISORY' (Test|Exercise)? Body? ;
-    Body -> DTG Centre AdvNum Prevadvsry? Phenomena ObsFcst Fcst+ Rmk (NextDTG|NoAdvisory) ;
+    Body -> DTG Centre Phenomena AdvNum Prevadvsry? ObsFcst Fcst+ Rmk (NextDTG|NoAdvisory) ;
 
-    ObsFcst -> Init Timestamp (Noos|(Daylight|Band|Equator|Longitudes|Point|FltLvls|'-')+) ;
-    Fcst -> FcstHr Timestamp (Noos|NA|(Daylight|Band|Equator|Longitudes|Point|FltLvls|'-')+) ;
+    ObsFcst -> Init Timestamp (Noos|(Intensity|Day|Night|Band|Equator|Longitudes|Point|FltLvls|'-')+) ;
+    Fcst -> FcstHr Timestamp (Noos|NA|(Intensity|Day|Night|Band|Equator|Longitudes|Point|FltLvls|'-')+) ;
 
     Test -> test/x $ self.status(x) $ ;
     Exercise -> exercise/x $ self.status(x) $ ;
@@ -77,9 +81,11 @@ class Decoder(tpg.Parser):
     Noos -> noos $ self.noos() $ ;
     NA -> notavail $ self.notavail() $ ;
 
+    Intensity -> intensity/x $ self.newgroup(x) $ ;
     Band -> lat_band/x $ self.lat_band(x) $ ;
     Point -> point/x $ self.point(x) $ ;
-    Daylight -> daylight $ self.daylight() $ ;
+    Day -> day/x $ self.day('day') $ ;
+    Night -> night/x $ self.day('night') $ ;
     Equator -> equator/x $ self.equator(x) $ ;
     Longitudes -> longitudes/x $ self.longitudes(x) $ ;
 
@@ -94,10 +100,11 @@ class Decoder(tpg.Parser):
 
         self._tokenInEnglish = {'_tok_1': 'SWX ADVISORY line', 'test': 'STATUS: TEST', 'exercise': 'STATUS: EXER',
                                 'dtg': 'Date/Time Group', 'centre': 'Issuing SWX Centre', 'advnum': 'YYYY/nnnn',
-                                'prevadvsry': 'Previous Advisory YYYY/nnnn', 'phenomenon': 'SWX Hazard(s)',
-                                'init': '(OBS|FCST) SWX', 'timestamp': 'DD/HHmmZ Group', 'noos': 'NO SWX EXP',
-                                'notavail': 'NOT AVBL', 'daylight': 'DAY(LIGHT)? SIDE', 'lat_band': '(H|M)(N|S)H',
-                                'equator': 'EQ(N|S)', 'longitudes': '(E|W)nnn[nn]-(E|W)nnn[nn]',
+                                'prevadvsry': 'One or more previous Advisories YYYY/nnnn',
+                                'phenomenon': 'SWX Hazard(s)', 'init': '(OBS|FCST) SWX', 'intensity': '(MOD|SEV)',
+                                'timestamp': 'DD/HHmmZ Group', 'noos': 'NO SWX EXP', 'notavail': 'NOT AVBL',
+                                'day': 'DAYSIDE', 'night': 'NIGHTSIDE', 'lat_band': '(H|M)(N|S)H',
+                                'equator': 'EQ(N|S)', 'longitudes': '(E|W)nnn-(E|W)nnn',
                                 'box': 'lat/long bounding box', 'fltlvls': 'ABV FLnnn|FLnnn-nnn',
                                 'fcsthr': 'FCST SWX +nn HR', 'rmk': 'RMK:',
                                 'nextdtg': 'Next advisory issuance date/time', 'noadvisory': 'NO FURTHER ADVISORIES'}
@@ -128,8 +135,7 @@ class Decoder(tpg.Parser):
 
     def __call__(self, tac):
 
-        self.swa = {'bbb': '',
-                    'translationTime': time.strftime('%Y-%m-%dT%H:%M:%SZ'),
+        self.swa = {'translationTime': time.strftime('%Y-%m-%dT%H:%M:%SZ'),
                     'fcsts': {}}
         try:
             result = self.header.search(tac)
@@ -216,25 +222,40 @@ class Decoder(tpg.Parser):
 
     def advnum(self, s, prefix='advisory'):
 
-        self.swa['%sNumber' % prefix] = s.split(':', 1)[1].strip()
+        if prefix == 'advisory':
+            self.swa['%sNumber' % prefix] = s.split(':', 1)[1].strip()
+        else:
+            cstrng = s.split(':', 1)[1].strip()
+            self.swa['%sNumber' % prefix] = cstrng.split()
 
     def init(self, s):
 
         if s.startswith('OBS'):
-            self._affected = {'timeIndicator': 'OBSERVATION'}
+            self._affected = {'timeIndictor': 'OBSERVATION'}
         else:
             self._affected = {'timeIndicator': 'FORECAST'}
 
         self._fcstkey = '0'
         self._boundingBox = BoundingBox()
+        self._group = {}
+
+    def newgroup(self, s):
+        "If MOD or SEV token is found"
+
+        self._group['boundingBoxes'] = self._boundingBox.getLatLongBoxes()
+        self._affected.setdefault('groups', []).append(self._group)
+        self._group = {'intensity': s}
 
     def fcsthr(self, s):
 
-        self._affected['boundingBoxes'] = self._boundingBox.getLatLongBoxes()
+        self._group['boundingBoxes'] = self._boundingBox.getLatLongBoxes()
+        self._affected.setdefault('groups', []).append(self._group)
+
         self.swa['fcsts'].update([(self._fcstkey, self._affected)])
         result = self.lexer.tokens[self.lexer.cur_token.name][0].match(s)
         self._fcstkey = result.group('fhr')
         self._affected = {'timeIndicator': 'FORECAST'}
+        self._group = {}
 
     def timestamp(self, s):
 
@@ -260,26 +281,36 @@ class Decoder(tpg.Parser):
 
     def add_region(self, s):
 
-        self._affected.setdefault('regions', []).append(s)
+        self._group.setdefault('regions', []).append(s)
         self._boundingBox.add(s, self.lexer.cur_token.name)
 
-    def daylight(self):
+    def day(self, s):
         #
         # Determine solar sub-point on Earth at forecast/observed time.
         fcsttime = self._ts.utc(*self.issueTime[:5])
         subpoint = wgs84.geographic_position_of((self._Helios - self._Gaia).at(fcsttime))
-        self._affected['daylight'] = '%s %s' % (round(subpoint.latitude.degrees, 2),
-                                                round(subpoint.longitude.degrees, 2))
+        #
+        if s == 'day':
+            subpoint = '%s %s' % (round(subpoint.latitude.degrees, 1),
+                                  round(subpoint.longitude.degrees, 1))
+        else:
+            longitude = round(subpoint.longitude.degrees, 1)
+            longitude = longitude + 180. if longitude <= 0 else longitude - 180.
+            subpoint = '%s %s' % (-(round(subpoint.latitude.degrees, 1)),
+                                  (round(longitude, 1)))
+
+        self._group[s] = subpoint
+        self._boundingBox.add(subpoint, s)
 
     def fltlvls(self, s):
 
-        self._affected['fltlevels'] = s
+        self._group['fltlevels'] = s
         self._boundingBox.add(s, self.lexer.cur_token.name)
 
     def phenomena(self, s):
 
         raw = s.split(':', 1)[1]
-        self.swa['phenomenon'] = [x.strip() for x in raw.split('AND')]
+        self.swa['phenomenon'] = raw.strip()
 
     def rmk(self, s):
 
@@ -293,11 +324,9 @@ class Decoder(tpg.Parser):
     def finish(self):
 
         try:
-            self._affected['boundingBoxes'] = self._boundingBox.getLatLongBoxes()
+            self._group['boundingBoxes'] = self._boundingBox.getLatLongBoxes()
+            self._affected.setdefault('groups', []).append(self._group)
             self.swa['fcsts'].update([(self._fcstkey, self._affected)])
-            #
-            # Destroy the uuid cache
-            del self._boundingBox
 
         except AttributeError:
             pass
@@ -306,26 +335,35 @@ class Decoder(tpg.Parser):
 
 
 class BoundingBox():
+    "Converts text to lat/lng point lists"
 
     def __init__(self):
         self._latitude_bands = {'HNH': {'neighbors': ['MNH'],
-                                        'latitudes': (90.0, 60.0)},
+                                        'latitudes': (90, 60)},
                                 'MNH': {'neighbors': ['HNH', 'EQN'],
-                                        'latitudes': (60.0, 30.0)},
+                                        'latitudes': (60, 30)},
                                 'EQN': {'neighbors': ['MNH', 'EQS'],
-                                        'latitudes': (30.0, 0.0)},
+                                        'latitudes': (30, 0)},
                                 'EQS': {'neighbors': ['MSH', 'EQN'],
-                                        'latitudes': (0.0, -30.0)},
+                                        'latitudes': (0, -30)},
                                 'MSH': {'neighbors': ['HSH', 'EQS'],
-                                        'latitudes': (-30.0, -60.0)},
+                                        'latitudes': (-30, -60)},
                                 'HSH': {'neighbors': ['MSH'],
-                                        'latitudes': (-60.0, -90.0)}}
+                                        'latitudes': (-60, -90)}}
         self.regions = []
         self.longitudes = []
         self.polygon = []
         self._band_cnt = 0
         self._fltlvls = ''
         self._uuid_cache = {}
+
+        factor = 1000
+        if des.DAYSIDE_UOM == '[mi_i]':
+            factor = 1609
+        try:
+            self.Gaia_RADIUS = float(des.DAYSIDE_RADIUS) * factor
+        except ValueError:
+            self.Gaia_RADIUS = 10100000
 
     def add(self, new_item, token_name):
 
@@ -383,9 +421,112 @@ class BoundingBox():
         elif token_name == 'fltlvls':
             self._fltlvls = new_item
 
-    def getLatLongBoxes(self):
+        elif token_name in ['day', 'night']:
+            sslat, sslng = new_item.split()
+            if len(self.regions):
+                self._bands = self.getTerminatedBands(float(sslat), float(sslng))
 
+    def getTerminatedBands(self, sslat, sslng):
+        "Generate day or night side latitude bands"
+
+        bands = {'HNH': [], 'MNH': [], 'EQN': [], 'EQS': [], 'MSH': [], 'HSH': []}
+
+        geod = Geodesic.WGS84
+        outmask = Geodesic.LATITUDE | Geodesic.LONGITUDE
+
+        bandNames = list(bands)
+        nameLoop = bandNames + bandNames[4::-1]
+        name = nameLoop.pop(0)
+        hi, lo = self._latitude_bands[name]['latitudes']
+        segment = []
+        #
+        # Given the solar sub-point, get lat/lng points on the terminator in CCW fashion
+        for bearing in range(0, -360, -des.INCR):
+
+            pt = geod.Direct(sslat, sslng, bearing, self.Gaia_RADIUS, outmask)
+            lat, lng = round(pt['lat2'], 1), round(pt['lon2'], 1)
+            # If point is in bounds, append to segment
+            if lo <= lat <= hi:
+                segment.append((lat, lng))
+            else:
+                cross = lo if bearing >= -180 else hi
+                # Make final point by interpolation and save it
+                interp = False
+                if cross != segment[-1][0]:
+                    # previous point
+                    plat, plng = segment[-1]
+                    lng = self._unroll(plng, lng)
+                    # interpolate new longitude
+                    try:
+                        nlng = lng - ((lng-plng)/(lat-plat))*(lat-cross)
+                    except ZeroDivisionError:
+                        nlng = lng
+
+                    if nlng < -180:
+                        nlng += 360
+                    elif nlng > 180:
+                        nlng -= 360
+                    segment.append((cross, round(nlng, 1)))
+                    interp = True
+
+                bands[name].append(segment)
+                #
+                # Start the new segment
+                if interp:
+                    segment = [(cross, round(nlng, 1))]
+                    segment.append((lat, lng))
+                else:
+                    segment = [(lat, lng)]
+
+                # Get the limits of next latitude band
+                name = nameLoop.pop(0)
+                hi, lo = self._latitude_bands[name]['latitudes']
+        #
+        # Extend the last segment with the first, partial, one
+        segment += bands[name].pop()
+        bands[name] = [segment]
+        #
+        # Stitch the segments together to form polygons
+        for name in bandNames:
+            #
+            # Get the latitude limits of the bands
+            tlat, blat = self._latitude_bands[name]['latitudes']
+            if name != 'HNH':
+                #
+                # Tops of the bands' lat/lng points go westward
+                try:
+                    tlngs = self._goWest(bands[name][1][-1][1], bands[name][0][0][1])
+                except IndexError:
+                    tlngs = self._goWest(bands[name][0][-1][1], bands[name][0][0][1])
+                segment = [(tlat, x) for x in tlngs]
+                segment.append(bands[name][0][0])
+                bands[name].append(segment)
+
+            if name != 'HSH':
+                #
+                # Bottoms of the bands' lat/lng points go eastward
+                try:
+                    blngs = self._goEast(bands[name][0][-1][1], bands[name][1][0][1])
+                except IndexError:
+                    blngs = self._goEast(bands[name][0][-1][1], bands[name][0][0][1])
+                segment = [(blat, x) for x in blngs]
+                if name == 'HNH': segment.append(bands[name][0][0])  # noqa: E701
+                bands[name].insert(1, segment)
+
+        return bands
+
+    def getLatLongBoxes(self):
+        #
+        # If the bands are limited by the Earth's day/night terminator, use them
         boxes = []
+        if hasattr(self, '_bands'):
+            for region in self.regions:
+                numPts, latslngs = self._getBordersOf(region)
+                boxes.append((numPts, latslngs, region, None))
+
+            self._reset()
+            return boxes
+
         for region in self.regions:
             alist = [self._latitude_bands[x]['latitudes'] for x in region]
             flattened = list(itertools.chain(*alist))
@@ -429,7 +570,6 @@ class BoundingBox():
                 self.polygon.append(self.polygon[0])
             #
             # Check to make sure polygon is traversed in CCW fashion
-            #
             fpolygon = []
             for pnt in self.polygon:
                 x, y = pnt.split()
@@ -455,12 +595,104 @@ class BoundingBox():
         self._reset()
         return boxes
 
+    def _getBordersOf(self, region):
+        "Get borders of--possibly combined--latitude bands"
+
+        numBands = len(region)
+        #
+        # If its just one latitude band, that's simple
+        if numBands == 1:
+            sides = []
+            for side in self._bands[region[0]]:
+                sides.extend(list(itertools.chain(side)))
+        #
+        # For multiple bands                             3
+        #  first band: save all sides, except bottom,    _
+        #  last band: save all sides, except top,    0 |   | 2
+        #  other bands: save LHS, RHS only               -
+        #                                                1
+        else:
+            for num, name in enumerate(region):
+                if num == 0:
+                    if name != 'HNH':
+                        lhs = [self._bands[name][0]]
+                        rhs = [self._bands[name][2]]
+                        top = [self._bands[name][3]]
+
+                    else:
+                        top = [self._bands[name][0]]
+
+                elif num == numBands-1:
+                    if name != 'HSH':
+                        lhs.append(self._bands[name][0])
+                        btm = [self._bands[name][1]]
+                        rhs.insert(0, self._bands[name][2])
+
+                    else:
+                        btm = [self._bands[name][0]]
+
+                else:
+                    lhs.append(self._bands[name][0])
+                    rhs.insert(0, self._bands[name][2])
+            #
+            # Now stitch together, keeping CCW order: lhs, btm, rhs, top.
+            sides = []
+            for side in [lhs, btm, rhs, top]:
+                sides.extend(list(itertools.chain.from_iterable(side)))
+
+        ssides = [f'{round(float(pt[0]), 1)} {round(float(pt[1]), 1)}' for pt in sides]
+        return len(ssides), ' '.join(ssides)
+
+    def _unroll(self, lon1, lon2):
+        "Adjust new longitude if it crosses the anti-meridan"
+        res1 = lon1 > 0
+        res2 = lon2 > 0
+        if res1 == res2:
+            return lon2
+        #
+        # From W to E hemisphere
+        if lon2 > lon1:
+            return lon2-360
+        # From E to W hemisphere
+        else:
+            return 360+lon2
+
+    def _goEast(self, lng1, lng2):
+        "Make list of longitudes from west to east"
+
+        lng1 = int(lng1+1)
+        lng2 = int(lng2-1)
+        if lng1 > 180:
+            lng1 -= 360
+        if lng2 <= -180:
+            lng2 += 360
+
+        easting = [x if x <= 180 else x-360 for x in range(lng1, lng1+360)]
+        return easting[0:easting.index(lng2)][::des.INCR]
+
+    def _goWest(self, lng1, lng2):
+        "Make list of longitudes from east to west"
+
+        lng1 = int(lng1-1)
+        lng2 = int(lng2+1)
+        if lng1 < -180:
+            lng1 += 360
+        if lng2 >= 180:
+            lng2 -= 360
+
+        westing = [x if x >= -180 else 360+x for x in range(lng1, lng1-360, -1)]
+        return westing[0:westing.index(lng2)][::des.INCR]
+
     def _reset(self):
 
         self.regions = []
         self.longitudes = []
         self.polygon = []
         self._fltlvls = ''
+        try:
+            del self._bands
+        except AttributeError:
+            pass
 
     def _convertToFloat(self, string):
 
@@ -472,15 +704,6 @@ class BoundingBox():
             pos = 3
 
         if dir in ['N', 'E']:
-            fac = 1.0
+            return int(latlong[1:pos])
         else:
-            fac = -1.0
-
-        degrees = int(latlong[1:pos])
-        try:
-            degrees = int(latlong[pos:]) * 0.0167 + float(degrees)
-        except ValueError:
-            pass
-
-        degrees *= fac
-        return round(degrees, 2)
+            return -int(latlong[1:pos])
