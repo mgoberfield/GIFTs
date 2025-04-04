@@ -28,13 +28,13 @@ TranslationCentreDesignator = ''
 # -----------------------------------------------------------------------------------
 #
 # The remainder of this file is relatively static, requiring updates when either:
-# IWXXM versioning changes, WMO Code Registry and/or Annex 3 or WMO 306 changes.
+# IWXXM schemas are re-released, WMO Code Registry and/or Annex 3 changes.
 #
 # -----------------------------------------------------------------------------------
 #
 # IWXXM versioning
-_iwxxm = '2023-1'
-_release = '2023-1'
+_iwxxm = '2025-2'
+_release = '2025-2RC1'
 #
 IWXXM_URI = 'http://icao.int/iwxxm/%s' % _iwxxm
 IWXXM_URL = 'https://schemas.wmo.int/iwxxm/%s/iwxxm.xsd' % _release
@@ -162,14 +162,17 @@ emitImpliedCAVOKConditionMessage = True  # Only effective when noImpliedCAVOKCon
 # ---------------------------------------------------------------------------------------------
 # Information is needed for Space Weather Advisories
 #
-# DAYLIGHTSIDE is the radius of the circle that circumscribes the daylight side of the
-# Earth which is approximately one-quarter of the Earth's circumference
+# The radius of the day side circle, i.e, terminator, of the Earth. It is approximately
+# one-quarter of the Earth's circumference
 #
-DAYLIGHTSIDE = 'DAYLIGHT_SIDE'
-DAYLIGHTSIDE_RADIUS = '10100'
+TERMINATOR_RADIUS = '10018'
 #
-# DAYLIGHTSIDE_UOM, only [mi_i] or 'km' is allowed
-DAYLIGHTSIDE_UOM = 'km'
+# TERMINATOR_UOM, only '[mi_i]' or 'km' is used
+TERMINATOR_UOM = 'km'
 #
-# Whether latitude bands in SWX product are combined
+# Set DAY or NIGHT SIDE polygon points at roughly INCR degree spacing. Do not go below one
+# degree.
+INCR = 5
+#
+# Whether latitude bands in SWX product can be combined
 JOIN_BANDS = False
