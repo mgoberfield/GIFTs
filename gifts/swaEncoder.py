@@ -10,9 +10,11 @@ import logging
 import re
 import xml.etree.ElementTree as ET
 
-from .common import xmlConfig as des
-from .common import xmlUtilities as deu
-
+#from .common import xmlConfig as des
+#from .common import xmlUtilities as deu
+import xmlConfig as des
+import xmlUtilities as deu
+import pdb
 
 class Encoder:
     def __init__(self):
@@ -72,8 +74,8 @@ class Encoder:
         else:
             self.XMLDocument.set('permissibleUsage', 'OPERATIONAL')
 
-        self.XMLDocument.set('reportStatus', {'A': 'AMENDMENT', 'C': 'CORRECTION'}.get(
-            self.decodedTAC['bbb'], 'NORMAL'))
+        self.XMLDocument.set('reportStatus', {'A': 'AMENDMENT', 'C': 'CORRECTION'}.get(self.decodedTAC.get('bbb',''),
+                                                                                       'NORMAL'))
         #
         if des.TRANSLATOR:
 
@@ -112,19 +114,20 @@ class Encoder:
 
         child = ET.SubElement(self.XMLDocument, 'advisoryNumber')
         child.text = self.decodedTAC['advisoryNumber']
+        #
+        # If this advisory replaces another/others
         try:
-            child = ET.Element('replacedAdvisoryNumber')
-            child.text = self.decodedTAC['replacedNumber']
-            self.XMLDocument.append(child)
+            for advId in self.decodedTAC['replacedNumber']:
+
+                child = ET.SubElement(self.XMLDocument, 'replacedAdvisoryNumber')
+                child.text = advId
 
         except KeyError:
             pass
         #
-        # Space Weather Hazards
-        for hazard in self.decodedTAC['phenomenon']:
-
-            child = ET.SubElement(self.XMLDocument, 'phenomenon')
-            child.set('xlink:href', self.codes[des.SWX_PHENOMENA]['_'.join(hazard.split())][0])
+        # Space Weather Hazard
+        child = ET.SubElement(self.XMLDocument, 'effect')
+        child.text = self.decodedTAC['effect']
 
     def issueTime(self, parent, timeStamp):
 
@@ -160,7 +163,7 @@ class Encoder:
     def observations(self):
         #
         # Order the forecast hours
-        fhrs = list(self.decodedTAC['fcsts'].keys())
+        fhrs = list(self.decodedTAC['fcsts'])
         fhrs.sort(key=int)
         #
         for fhr in fhrs:
@@ -176,61 +179,75 @@ class Encoder:
         indent1.set('gml:id', deu.getUUID())
         indent1.set('timeIndicator', token['timeIndicator'])
         self.itime(indent1, token['phenomenonTime'])
+        try:
+            self.doAffectedAreas(indent1, token['groups'])
+        except KeyError:
+            indent2 = ET.SubElement(indent1, 'intensityAndRegion')
+            if 'noswxexp' in token:
+                indent2.set('nilReason', self.codes[des.NIL][des.NOOPRSIG][0])
 
-        if 'noswxexp' in token:
+            elif 'notavail' in token:
+                indent2.set('nilReason', self.codes[des.NIL][des.MSSG][0])
 
-            indent2 = ET.SubElement(indent1, 'region')
-            indent2.set('nilReason', self.codes[des.NIL][des.NOOPRSIG][0])
+    def doAffectedAreas(self, parent, groups):
+        "For each SEVERE and MODERATE areas"
+        for thisIntensity in groups:
 
-        elif 'notavail' in token:
+            indent = ET.SubElement(parent, 'intensityAndRegion')
+            indent1 = ET.SubElement(indent, 'SpaceWeatherIntensityAndRegion')
+            indent1.set('gml:id', deu.getUUID())
+            indent2 = ET.SubElement(indent1, 'intensity')
+            indent2.text = thisIntensity['intensity']
+            #
+            # If the hazard or effects covers the entire side of the earth . . .
+            if (('day' in thisIntensity or 'night' in thisIntensity) and 'boundingBoxes' not in thisIntensity):
 
-            indent2 = ET.SubElement(indent1, 'region')
-            indent2.set('nilReason', self.codes[des.NIL][des.MSSG][0])
+                indent2 = ET.SubElement(indent1, 'region')
+                indent3 = ET.SubElement(indent2, 'SpaceWeatherRegion')
+                indent3.set('gml:id', deu.getUUID())
+                side = 'day' if 'day' in thisIntensity else 'night'
+                indent4 = ET.SubElement(indent3, 'location')
+                try:
+                    result = self._fltLvls.match(thisIntensity['fltlevels'])
+                    self.airspaceVolume(indent4, thisIntensity[side], result.groupdict(), side)
 
-        elif 'daylight' in token:
+                except KeyError:
+                    self.airspaceVolume(indent4, thisIntensity[side], None, side)
 
-            indent2 = ET.SubElement(indent1, 'region')
-            indent3 = ET.SubElement(indent2, 'SpaceWeatherRegion')
-            indent3.set('gml:id', deu.getUUID())
-            indent4 = ET.SubElement(indent3, 'location')
-            try:
-                result = self._fltLvls.match(token['fltlevels'])
-                self.airspaceVolume(indent4, token, result.groupdict())
-
-            except KeyError:
-                self.airspaceVolume(indent4, token)
-
-            indent4 = ET.SubElement(indent3, 'locationIndicator')
-            indent4.set('xlink:href', self.codes[des.SWX_LOCATION][des.DAYLIGHTSIDE][0])
-
-        for affectedRegion in token.get('boundingBoxes', []):
-
-            indent2 = ET.SubElement(indent1, 'region')
-            regions, uuidString = affectedRegion[-2:]
-
-            if uuidString[0] == '#':
-                indent2.set('xlink:href', uuidString)
+                indent4 = ET.SubElement(indent3, 'locationIndicator')
+                if side == 'day':
+                    indent4.set('xlink:href', self.codes[des.SWX_LOCATION]['DAY_SIDE'][0])
+                else:
+                    indent4.set('xlink:href', self.codes[des.SWX_LOCATION]['NIGHT_SIDE'][0])
                 continue
 
-            indent3 = ET.SubElement(indent2, 'SpaceWeatherRegion')
-            indent4 = ET.SubElement(indent3, 'location')
-            indent3.set('gml:id', uuidString)
+            # New region element for each bounding box
+            for area in thisIntensity['boundingBoxes']:
 
-            try:
-                result = self._fltLvls.match(token['fltlevels'])
-                self.airspaceVolume(indent4, affectedRegion, result.groupdict())
+                indent2 = ET.SubElement(indent1, 'region')
+                indent3 = ET.SubElement(indent2, 'SpaceWeatherRegion')
+                regions, uuidString = area[-2:]
+                if uuidString is None:
+                    indent3.set('gml:id', deu.getUUID())
+                else:
+                    indent3.set('gml:id', uuidString)
 
-            except KeyError:
-                self.airspaceVolume(indent4, affectedRegion)
-
-            for band in regions:
-                indent4 = ET.SubElement(indent3, 'locationIndicator')
+                indent4 = ET.SubElement(indent3, 'location')
                 try:
-                    indent4.set('xlink:href', self.codes[des.SWX_LOCATION][band][0])
-                except KeyError:
-                    indent4.set('xlink:href', self.codes[des.NIL][des.NA][0])
+                    result = self._fltLvls.match(thisIntensity['fltlevels'])
+                    self.airspaceVolume(indent4, area, result.groupdict())
 
-    def airspaceVolume(self, parent, token, fltlvls=None):
+                except KeyError:
+                    self.airspaceVolume(indent4, area)
+
+                for band in regions:
+                    indent4 = ET.SubElement(indent3, 'locationIndicator')
+                    try:
+                        indent4.set('xlink:href', self.codes[des.SWX_LOCATION][band][0])
+                    except KeyError:
+                        indent4.set('xlink:href', self.codes[des.NIL][des.NA][0])
+
+    def airspaceVolume(self, parent, token, fltlvls=None, side=None):
 
         indent1 = ET.SubElement(parent, 'AirspaceVolume')
         indent1.set('xmlns', self.NameSpaces['aixm'])
@@ -276,7 +293,7 @@ class Encoder:
         indent5 = ET.SubElement(indent4, 'PolygonPatch')
         indent6 = ET.SubElement(indent5, 'exterior')
 
-        if 'daylight' in token:
+        if side in ['day', 'night']:
             indent7 = ET.SubElement(indent6, 'Ring')
             indent8 = ET.SubElement(indent7, 'curveMember')
             indent9 = ET.SubElement(indent8, 'Curve')
@@ -285,10 +302,10 @@ class Encoder:
             indent11 = ET.SubElement(indent10, 'CircleByCenterPoint')
             indent11.set('numArc', '1')
             indent12 = ET.SubElement(indent11, 'pos')
-            indent12.text = token['daylight']
+            indent12.text = token
             indent12 = ET.SubElement(indent11, 'radius')
-            indent12.text = des.DAYLIGHTSIDE_RADIUS
-            indent12.set('uom', des.DAYLIGHTSIDE_UOM)
+            indent12.text = des.TERMINATOR_RADIUS
+            indent12.set('uom', des.TERMINATOR_UOM)
 
         else:
             indent7 = ET.SubElement(indent6, 'LinearRing')
