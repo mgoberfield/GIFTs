@@ -12,9 +12,12 @@ from skyfield.toposlib import wgs84
 
 from geographiclib.geodesic import Geodesic
 
-from .common import tpg
-from .common import xmlConfig as des
-from .common import xmlUtilities as deu
+#from .common import tpg
+#from .common import xmlConfig as des
+#from .common import xmlUtilities as deu
+import tpg
+import xmlConfig as des
+import xmlUtilities as deu
 #
 # Name: swaDecoder.py
 #
@@ -38,7 +41,7 @@ class Decoder(tpg.Parser):
     token exercise: 'STATUS:\s*EXER\w{0,4}' ;
     token dtg: 'DTG:\s*(?P<date>\d{8})/(?P<time>\d{4})Z' ;
     token centre: 'SWXC:\s*(\w+)' ;
-    token phenomena: 'SWX EFFECT:\s*(RADIATION|GNSS|(HF\s+|SAT)COM)' ;
+    token effect: 'SWX EFFECT:\s*(RADIATION|GNSS|(HF\s+|SAT)COM)' ;
     token advnum: 'ADVISORY NR:\s*(\d{4}/\d{1,4})' ;
     token prevadvsry: 'NR RPLC:([.\s\d\/]+)' ;
     token init: '(OBS|FCST) SWX:' ;
@@ -61,7 +64,7 @@ class Decoder(tpg.Parser):
     START/d -> SWX $ d=self.finish() $ ;
 
     SWX -> 'SWX ADVISORY' (Test|Exercise)? Body? ;
-    Body -> DTG Centre Phenomena AdvNum Prevadvsry? ObsFcst Fcst+ Rmk (NextDTG|NoAdvisory) ;
+    Body -> DTG Centre Effect AdvNum Prevadvsry? ObsFcst Fcst+ Rmk (NextDTG|NoAdvisory) ;
 
     ObsFcst -> Init Timestamp (Noos|(Intensity|Day|Night|Band|Equator|Longitudes|Point|FltLvls|'-')+) ;
     Fcst -> FcstHr Timestamp (Noos|NA|(Intensity|Day|Night|Band|Equator|Longitudes|Point|FltLvls|'-')+) ;
@@ -72,7 +75,7 @@ class Decoder(tpg.Parser):
     Centre -> centre/x $ self.centre(x) $ ;
     AdvNum -> advnum/x $ self.advnum(x) $ ;
     Prevadvsry -> prevadvsry/x $ self.advnum(x,'replaced') $ ;
-    Phenomena -> phenomena/x $ self.phenomena(x) $ ;
+    Effect -> effect/x $ self.effect(x) $ ;
 
     Init -> init/x $ self.init(x) $ ;
     FcstHr -> fcsthr/x $ self.fcsthr(x) $ ;
@@ -101,7 +104,7 @@ class Decoder(tpg.Parser):
         self._tokenInEnglish = {'_tok_1': 'SWX ADVISORY line', 'test': 'STATUS: TEST', 'exercise': 'STATUS: EXER',
                                 'dtg': 'Date/Time Group', 'centre': 'Issuing SWX Centre', 'advnum': 'YYYY/nnnn',
                                 'prevadvsry': 'One or more previous Advisories YYYY/nnnn',
-                                'phenomenon': 'SWX Hazard(s)', 'init': '(OBS|FCST) SWX', 'intensity': '(MOD|SEV)',
+                                'effectn': 'SWX Hazard(s)', 'init': '(OBS|FCST) SWX', 'intensity': '(MOD|SEV)',
                                 'timestamp': 'DD/HHmmZ Group', 'noos': 'NO SWX EXP', 'notavail': 'NOT AVBL',
                                 'day': 'DAYSIDE', 'night': 'NIGHTSIDE', 'lat_band': '(H|M)(N|S)H',
                                 'equator': 'EQ(N|S)', 'longitudes': '(E|W)nnn-(E|W)nnn',
@@ -231,7 +234,7 @@ class Decoder(tpg.Parser):
     def init(self, s):
 
         if s.startswith('OBS'):
-            self._affected = {'timeIndictor': 'OBSERVATION'}
+            self._affected = {'timeIndicator': 'OBSERVATION'}
         else:
             self._affected = {'timeIndicator': 'FORECAST'}
 
@@ -242,14 +245,22 @@ class Decoder(tpg.Parser):
     def newgroup(self, s):
         "If MOD or SEV token is found"
 
-        self._group['boundingBoxes'] = self._boundingBox.getLatLongBoxes()
-        self._affected.setdefault('groups', []).append(self._group)
+        if self._group:
+            boxes = self._boundingBox.getLatLongBoxes()
+            if len(boxes):
+                self._group['boundingBoxes'] = boxes
+            self._affected.setdefault('groups', []).append(self._group)
+
         self._group = {'intensity': s}
 
     def fcsthr(self, s):
 
-        self._group['boundingBoxes'] = self._boundingBox.getLatLongBoxes()
-        self._affected.setdefault('groups', []).append(self._group)
+        if self._group:
+            boxes = self._boundingBox.getLatLongBoxes()
+            if len(boxes):
+                self._group['boundingBoxes'] = boxes
+
+            self._affected.setdefault('groups', []).append(self._group)
 
         self.swa['fcsts'].update([(self._fcstkey, self._affected)])
         result = self.lexer.tokens[self.lexer.cur_token.name][0].match(s)
@@ -307,10 +318,10 @@ class Decoder(tpg.Parser):
         self._group['fltlevels'] = s
         self._boundingBox.add(s, self.lexer.cur_token.name)
 
-    def phenomena(self, s):
+    def effect(self, s):
 
         raw = s.split(':', 1)[1]
-        self.swa['phenomenon'] = raw.strip()
+        self.swa['effect'] = raw.strip().replace(' ','_')
 
     def rmk(self, s):
 
@@ -324,8 +335,13 @@ class Decoder(tpg.Parser):
     def finish(self):
 
         try:
-            self._group['boundingBoxes'] = self._boundingBox.getLatLongBoxes()
-            self._affected.setdefault('groups', []).append(self._group)
+            if self._group:
+                boxes = self._boundingBox.getLatLongBoxes()
+                if len(boxes):
+                    self._group['boundingBoxes'] = boxes
+
+                self._affected.setdefault('groups', []).append(self._group)
+
             self.swa['fcsts'].update([(self._fcstkey, self._affected)])
 
         except AttributeError:
@@ -355,15 +371,14 @@ class BoundingBox():
         self.polygon = []
         self._band_cnt = 0
         self._fltlvls = ''
-        self._uuid_cache = {}
 
         factor = 1000
-        if des.DAYSIDE_UOM == '[mi_i]':
+        if des.TERMINATOR_UOM == '[mi_i]':
             factor = 1609
         try:
-            self.Gaia_RADIUS = float(des.DAYSIDE_RADIUS) * factor
+            self.Gaia_RADIUS = float(des.TERMINATOR_RADIUS) * factor
         except ValueError:
-            self.Gaia_RADIUS = 10100000
+            self.Gaia_RADIUS = 10018000
 
     def add(self, new_item, token_name):
 
@@ -546,14 +561,7 @@ class BoundingBox():
             ws = str(w)
             ss = str(s)
             #
-            aKey = copy.copy(region)
-            aKey.extend([es, ws, self._fltlvls])
-            uuidKey = frozenset(aKey)
-            try:
-                new_uuid = self._uuid_cache[uuidKey]
-            except KeyError:
-                new_uuid = deu.getUUID()
-                self._uuid_cache[uuidKey] = '#%s' % new_uuid
+            new_uuid = deu.getUUID()
             #
             # Start in NW corner and go counter-clockwise, poles are evil places
             if n != 90 and s != -90:
@@ -581,15 +589,7 @@ class BoundingBox():
             except ValueError as msg:
                 self._Logger.info(msg)
 
-            aKey = copy.copy(self.polygon)
-            aKey.append(self._fltlvls)
-            uuidKey = frozenset(aKey)
-            try:
-                new_uuid = self._uuid_cache[uuidKey]
-            except KeyError:
-                new_uuid = deu.getUUID()
-                self._uuid_cache[uuidKey] = '#%s' % new_uuid
-
+            new_uuid = deu.getUUID()
             boxes.append((str(len(self.polygon)), ' '.join(self.polygon), ['POLYGON'], new_uuid))
 
         self._reset()
@@ -641,7 +641,7 @@ class BoundingBox():
                 sides.extend(list(itertools.chain.from_iterable(side)))
 
         ssides = [f'{round(float(pt[0]), 1)} {round(float(pt[1]), 1)}' for pt in sides]
-        return len(ssides), ' '.join(ssides)
+        return str(len(ssides)), ' '.join(ssides)
 
     def _unroll(self, lon1, lon2):
         "Adjust new longitude if it crosses the anti-meridan"
