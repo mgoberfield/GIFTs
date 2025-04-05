@@ -175,4 +175,4 @@ TERMINATOR_UOM = 'km'
 INCR = 5
 #
 # Whether latitude bands in SWX product can be combined
-JOIN_BANDS = False
+JOIN_BANDS = True
