@@ -1,4 +1,3 @@
-import copy
 import itertools
 import logging
 import os
@@ -12,13 +11,10 @@ from skyfield.toposlib import wgs84
 
 from geographiclib.geodesic import Geodesic
 
-#from .common import tpg
-#from .common import xmlConfig as des
-#from .common import xmlUtilities as deu
-import tpg
-import xmlConfig as des
-import xmlUtilities as deu
-#
+from .common import tpg
+from .common import xmlConfig as des
+from .common import xmlUtilities as deu
+
 # Name: swaDecoder.py
 #
 # Purpose: To decode, in its entirety, the Space Weather Advisory traditional alphanumeric code
@@ -137,8 +133,10 @@ class Decoder(tpg.Parser):
         return super(Decoder, self).__init__()
 
     def __call__(self, tac):
-
-        self.swa = {'translationTime': time.strftime('%Y-%m-%dT%H:%M:%SZ'),
+        #
+        # BBB code unused but needed for bulletin
+        self.swa = {'bbb': '',
+                    'translationTime': time.strftime('%Y-%m-%dT%H:%M:%SZ'),
                     'fcsts': {}}
         try:
             result = self.header.search(tac)
@@ -205,7 +203,6 @@ class Decoder(tpg.Parser):
         tms[2] = int(ymd[6:8])
         tms[3] = int(hhmm[0:2])
         tms[4] = int(hhmm[2:4])
-        deu.fix_date(tms)
 
         if self.lexer.cur_token.name == 'dtg':
             self.issueTime = tms
@@ -321,7 +318,7 @@ class Decoder(tpg.Parser):
     def effect(self, s):
 
         raw = s.split(':', 1)[1]
-        self.swa['effect'] = raw.strip().replace(' ','_')
+        self.swa['effect'] = raw.strip().replace(' ', '_')
 
     def rmk(self, s):
 
@@ -376,9 +373,9 @@ class BoundingBox():
         if des.TERMINATOR_UOM == '[mi_i]':
             factor = 1609
         try:
-            self.Gaia_RADIUS = float(des.TERMINATOR_RADIUS) * factor
+            self.Gaia_TRADIUS = float(des.TERMINATOR_RADIUS) * factor
         except ValueError:
-            self.Gaia_RADIUS = 10018000
+            self.Gaia_TRADIUS = 10018000
 
     def add(self, new_item, token_name):
 
@@ -435,7 +432,8 @@ class BoundingBox():
 
         elif token_name == 'fltlvls':
             self._fltlvls = new_item
-
+        #
+        # (DAY|NIGHT)SIDE modifies the latitude bands
         elif token_name in ['day', 'night']:
             sslat, sslng = new_item.split()
             if len(self.regions):
@@ -458,7 +456,7 @@ class BoundingBox():
         # Given the solar sub-point, get lat/lng points on the terminator in CCW fashion
         for bearing in range(0, -360, -des.INCR):
 
-            pt = geod.Direct(sslat, sslng, bearing, self.Gaia_RADIUS, outmask)
+            pt = geod.Direct(sslat, sslng, bearing, self.Gaia_TRADIUS, outmask)
             lat, lng = round(pt['lat2'], 1), round(pt['lon2'], 1)
             # If point is in bounds, append to segment
             if lo <= lat <= hi:
@@ -471,7 +469,7 @@ class BoundingBox():
                     # previous point
                     plat, plng = segment[-1]
                     lng = self._unroll(plng, lng)
-                    # interpolate new longitude
+                    # interpolate new longitude for crossing latitude
                     try:
                         nlng = lng - ((lng-plng)/(lat-plat))*(lat-cross)
                     except ZeroDivisionError:
@@ -535,6 +533,7 @@ class BoundingBox():
         # If the bands are limited by the Earth's day/night terminator, use them
         boxes = []
         if hasattr(self, '_bands'):
+
             for region in self.regions:
                 numPts, latslngs = self._getBordersOf(region)
                 boxes.append((numPts, latslngs, region, None))
@@ -606,13 +605,14 @@ class BoundingBox():
             for side in self._bands[region[0]]:
                 sides.extend(list(itertools.chain(side)))
         #
-        # For multiple bands                             3
+        # For multiple bands, order from N->S            3
         #  first band: save all sides, except bottom,    _
         #  last band: save all sides, except top,    0 |   | 2
         #  other bands: save LHS, RHS only               -
         #                                                1
         else:
-            for num, name in enumerate(region):
+            o = list(self._latitude_bands.keys())
+            for num, name in enumerate([o[x] for x in sorted([o.index(y) for y in region])]):
                 if num == 0:
                     if name != 'HNH':
                         lhs = [self._bands[name][0]]
@@ -621,6 +621,8 @@ class BoundingBox():
 
                     else:
                         top = [self._bands[name][0]]
+                        lhs = []
+                        rhs = []
 
                 elif num == numBands-1:
                     if name != 'HSH':
@@ -645,17 +647,15 @@ class BoundingBox():
 
     def _unroll(self, lon1, lon2):
         "Adjust new longitude if it crosses the anti-meridan"
-        res1 = lon1 > 0
-        res2 = lon2 > 0
-        if res1 == res2:
-            return lon2
         #
-        # From W to E hemisphere
-        if lon2 > lon1:
-            return lon2-360
-        # From E to W hemisphere
+        # If difference in longitude is greater than 180
+        if abs(lon2 - lon1) > 180:
+            if lon2 > lon1:
+                return lon2-360
+            else:
+                return 360+lon2
         else:
-            return 360+lon2
+            return lon2
 
     def _goEast(self, lng1, lng2):
         "Make list of longitudes from west to east"

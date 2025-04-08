@@ -6,7 +6,6 @@
 # Author: Mark Oberfield
 # Organization: NOAA/NWS/OSTI/Meteorological Development Laboratory
 # Contact Info: Mark.Oberfield@noaa.gov
-# Date: 5 June 2023
 #
 import os
 # -----------------------------------------------------------------------------------
@@ -26,13 +25,7 @@ TranslationCentreName = ''
 TranslationCentreDesignator = ''
 #
 # -----------------------------------------------------------------------------------
-#
-# The remainder of this file is relatively static, requiring updates when either:
-# IWXXM schemas are re-released, WMO Code Registry and/or Annex 3 changes.
-#
-# -----------------------------------------------------------------------------------
-#
-# IWXXM versioning
+# IWXXM release name
 _iwxxm = '2025-2'
 _release = '2025-2RC1'
 #
@@ -46,7 +39,7 @@ CodesFilePath = os.path.join(os.path.dirname(__file__), '../data')
 # To support Annex 3 code forms, the following Containers from the WMO Code Registry
 # site were downloaded into the CodesFilePath directory in RDF format.
 #
-# These are needed for MDL's IWXXM Encoders
+# These are needed for the IWXXM Encoders
 #
 CLDAMTS = 'CloudAmountReportedAtAerodrome'
 COLOUR_CODES = 'AviationColourCode'
@@ -145,8 +138,9 @@ Max_PercentageOfPrevailing = 50
 # change during the TAF period of validity.
 #
 # When a forecast group introduces changes to sky or visibility conditions (and not both at
-# the same time), it is not clear how the other elment is affected and the IWXXM schematron
-# rule, TAF.TAF-8, requires both to be known when CAVOK is not in effect.
+# the same time) after a CAVOK forecast, it is not clear how the other elment is affected
+# and the IWXXM schematron rule, TAF.TAF-8, requires both to be known when CAVOK is not in
+# effect.
 #
 # By setting the 'noImpliedCAVOKCondition' to True, the TAF decoder will flag this forecast
 # group to the forecaster for remediation.
@@ -162,9 +156,13 @@ emitImpliedCAVOKConditionMessage = True  # Only effective when noImpliedCAVOKCon
 # ---------------------------------------------------------------------------------------------
 # Information is needed for Space Weather Advisories
 #
-# The radius of the day side circle, i.e, terminator, of the Earth. It is approximately
-# one-quarter of the Earth's circumference
+# Macros that match the WMO Code Registry "Space Wx Location" container for day and night
+# coverage
+DAYSIDE = 'DAYSIDE'
+NIGHTSIDE = 'NIGHTSIDE'
 #
+# The distance to the Earth's day/night termination line from the solar sub-point. It is
+# approximately one-quarter of the Earth's circumference
 TERMINATOR_RADIUS = '10018'
 #
 # TERMINATOR_UOM, only '[mi_i]' or 'km' is used
@@ -174,5 +172,5 @@ TERMINATOR_UOM = 'km'
 # degree.
 INCR = 5
 #
-# Whether latitude bands in SWX product can be combined
+# Whether latitude bands in the product can be combined
 JOIN_BANDS = True
