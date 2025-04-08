@@ -10,15 +10,13 @@ import logging
 import re
 import xml.etree.ElementTree as ET
 
-#from .common import xmlConfig as des
-#from .common import xmlUtilities as deu
-import xmlConfig as des
-import xmlUtilities as deu
-import pdb
+from .common import xmlConfig as des
+from .common import xmlUtilities as deu
+
 
 class Encoder:
     def __init__(self):
-        #
+
         self._Logger = logging.getLogger(__name__)
         self.NameSpaces = {'aixm': 'http://www.aixm.aero/schema/5.1.1',
                            'gml': 'http://www.opengis.net/gml/3.2',
@@ -44,7 +42,7 @@ class Encoder:
 
         try:
             self.preamble()
-            self.observations()
+            self.timeProjections()
             self.postContent()
 
         except Exception:
@@ -74,7 +72,7 @@ class Encoder:
         else:
             self.XMLDocument.set('permissibleUsage', 'OPERATIONAL')
 
-        self.XMLDocument.set('reportStatus', {'A': 'AMENDMENT', 'C': 'CORRECTION'}.get(self.decodedTAC.get('bbb',''),
+        self.XMLDocument.set('reportStatus', {'A': 'AMENDMENT', 'C': 'CORRECTION'}.get(self.decodedTAC.get('bbb', ''),
                                                                                        'NORMAL'))
         #
         if des.TRANSLATOR:
@@ -116,14 +114,9 @@ class Encoder:
         child.text = self.decodedTAC['advisoryNumber']
         #
         # If this advisory replaces another/others
-        try:
-            for advId in self.decodedTAC['replacedNumber']:
-
-                child = ET.SubElement(self.XMLDocument, 'replacedAdvisoryNumber')
-                child.text = advId
-
-        except KeyError:
-            pass
+        for advId in self.decodedTAC.get('replacedNumber', []):
+            child = ET.SubElement(self.XMLDocument, 'replacedAdvisoryNumber')
+            child.text = advId
         #
         # Space Weather Hazard
         child = ET.SubElement(self.XMLDocument, 'effect')
@@ -160,13 +153,9 @@ class Encoder:
         indent4 = ET.SubElement(indent3, 'aixm:designator')
         indent4.text = centre
 
-    def observations(self):
-        #
-        # Order the forecast hours
-        fhrs = list(self.decodedTAC['fcsts'])
-        fhrs.sort(key=int)
-        #
-        for fhr in fhrs:
+    def timeProjections(self):
+
+        for fhr in self.decodedTAC.get('fcsts', []):
             try:
                 self.result(self.XMLDocument, self.decodedTAC['fcsts'][fhr])
             except Exception:
@@ -216,13 +205,12 @@ class Encoder:
 
                 indent4 = ET.SubElement(indent3, 'locationIndicator')
                 if side == 'day':
-                    indent4.set('xlink:href', self.codes[des.SWX_LOCATION]['DAY_SIDE'][0])
+                    indent4.set('xlink:href', self.codes[des.SWX_LOCATION][des.DAYSIDE][0])
                 else:
-                    indent4.set('xlink:href', self.codes[des.SWX_LOCATION]['NIGHT_SIDE'][0])
-                continue
+                    indent4.set('xlink:href', self.codes[des.SWX_LOCATION][des.NIGHTSIDE][0])
 
             # New region element for each bounding box
-            for area in thisIntensity['boundingBoxes']:
+            for area in thisIntensity.get('boundingBoxes', []):
 
                 indent2 = ET.SubElement(indent1, 'region')
                 indent3 = ET.SubElement(indent2, 'SpaceWeatherRegion')
@@ -239,13 +227,16 @@ class Encoder:
 
                 except KeyError:
                     self.airspaceVolume(indent4, area)
-
+                #
+                # Include locations only if they are in the WMO code registry
                 for band in regions:
-                    indent4 = ET.SubElement(indent3, 'locationIndicator')
                     try:
+                        indent4 = ET.Element('locationIndicator')
                         indent4.set('xlink:href', self.codes[des.SWX_LOCATION][band][0])
+                        indent3.append(indent4)
+
                     except KeyError:
-                        indent4.set('xlink:href', self.codes[des.NIL][des.NA][0])
+                        pass
 
     def airspaceVolume(self, parent, token, fltlvls=None, side=None):
 
