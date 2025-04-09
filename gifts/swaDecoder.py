@@ -484,13 +484,16 @@ class BoundingBox():
 
                 bands[name].append(segment)
                 #
-                # Start the new segment
+                # Start the new segment either with the interpolated point, or the
+                # last point of the previous segment
+                #
                 if interp:
                     segment = [(cross, round(nlng, 1))]
-                    segment.append((lat, lng))
                 else:
-                    segment = [(lat, lng)]
+                    segment = [segment[-1]]
 
+                segment.append((lat, lng))
+                #
                 # Get the limits of next latitude band
                 name = nameLoop.pop(0)
                 hi, lo = self._latitude_bands[name]['latitudes']
