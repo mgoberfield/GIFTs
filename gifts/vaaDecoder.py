@@ -531,8 +531,7 @@ class Decoder(tpg.Parser):
         self.vaa['remarks'] = ' '.join(s[4:].split())
 
     def postPolygon(self, cloudInfo):
-        #
-        # Called after new forecast projection, and ash cloud polygon(s)
+        """Called after new forecast projection, and ash cloud polygon(s)"""
         if cloudInfo is None:
             return
 
