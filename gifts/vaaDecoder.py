@@ -38,13 +38,12 @@ class Decoder(tpg.Parser):
     token vname: 'VOLCANO:\s*(\w.*)' ;
     token vloc: 'PSN:\s*(([NS]\d{2,4}\s+[EW]\d{3,5})|UNKNOWN)' ;
     token region: 'AREA:\s*(\w.*)' ;
-    token summit: 'SUMMIT ELEV:\s*(SFC|UNKNOWN|((?P<elevation>\d{1,5})\s?(?P<uom>M|FT))).*' ;
+    token source: 'SOURCE ELEV:\s*(UNKNOWN|(?P<elevation>\d{1,5})\s?(?P<uom>M|FT)\s*(?P<ref>(A|BLW\s)MSL)?)' ;
     token advnum: 'ADVISORY NR:\s*(\d{4}/\d{1,4})' ;
-    token source1: 'INFO SOURCE:\s*([\S\s]+)(?=AVIATION COLOU?R CODE:)' ;
-    token source2: 'INFO SOURCE:\s*([\S\s]+)(?=ERUPTION DETAILS:)' ;
-    token colour: 'AVIATION COLOU?R CODE:\s*(\w.+)' ;
+    token info: 'INFO SOURCE:\s*([\S\s]+)(?=ERUPTION DETAILS:)' ;
     token details: 'ERUPTION DETAILS:\s*([\S\s]+)(?=(OBS|EST) VA DTG)' ;
     token obsdtg: '(OBS|EST) VA DTG:\s*(?P<day>\d{2})/(?P<time>\d{4})Z' ;
+    token wthlddtg: '(OBS|EST) VA DTG:\s*NOT PROVIDED' ;
     token opreamble: '(OBS|EST) VA CLD:' ;
     token fpreamble: 'FCST VA CLD \+(?P<fhr>\d{1,2})\s?HR?:' ;
     token dayhour: '\d{2}/\d{4}Z' ;
@@ -62,11 +61,10 @@ class Decoder(tpg.Parser):
     token nextdtg: 'NXT ADVISORY:\s*((NO FURTHER ADVISORIES)|(((NO LATER THAN )|(WILL BE ISSUED BY ))?(?P<date>\d{8})/(?P<time>\d{4})Z?))' ;  # noqa: E501
 
     START/d -> VAA $ d=self.finish() $ ;
-    VAA -> 'VA ADVISORY' (Test|Exercise)? DTG Centre VName VLoc Region Summit AdvNum Source ColorCode? Details ObsDTG ObsClds FcstClds+ Rmk NextDTG ;  # noqa: E501
+    VAA -> 'VA ADVISORY' (Test|Exercise)? DTG Centre VName VLoc Region Source AdvNum Info Details (ObsDTG|WthldDTG) ObsClds FcstClds{3} Rmk NextDTG ;  # noqa: E501
 
-    Source -> (Source1|Source2) ;
-    ObsClds -> oPreamble (VaNotId|(Volume (Box? (LatLon|'-')+) Movement)+) ;
-    FcstClds -> fPreamble DayHour? (Volume? (NoAshExp|NotAvbl|NotPrvd|(Box? (LatLon|'-')+)))* ;
+    ObsClds -> oPreamble (VaNotId|NotAvbl|NotPrvd|NoAshExp|(Volume (Box? (LatLon|'-')+) Movement)+) ;
+    FcstClds -> fPreamble DayHour (Volume? (NoAshExp|NotAvbl|NotPrvd|(Box? (LatLon|'-')+)))* ;
     Volume -> (Sfc|MidLyr|Top)  ;
 
     Exercise -> exercise/x $ self.status(x) $ ;
@@ -76,13 +74,12 @@ class Decoder(tpg.Parser):
     VName -> vname/x $ self.vname(x) $ ;
     VLoc -> vloc/x $ self.vloc(x) $ ;
     Region -> region/x $ self.region(x) $ ;
-    Summit -> summit/x $ self.summit(x) $ ;
+    Source -> source/x $ self.source(x) $ ;
     AdvNum -> advnum/x $ self.advnum(x) $ ;
-    Source1 -> source1/x $ self.source(x,'ERUPTION DETAILS:') $ ;
-    Source2 -> source2/x $ self.source(x,None) $ ;
-    ColorCode -> colour/x $ self.colour(x) $ ;
+    Info -> info/x $ self.info(x) $ ;
     Details -> details/x $ self.details(x) $ ;
     ObsDTG -> obsdtg/x $ self.dtg(x) $ ;
+    WthldDTG -> wthlddtg ;
     oPreamble -> opreamble/x $ self.preamble(x) $ ;
     fPreamble -> fpreamble/x $ self.preamble(x) $ ;
     DayHour -> dayhour/x $ self.dtg(x) $ ;
@@ -104,9 +101,9 @@ class Decoder(tpg.Parser):
 
         self._tokenInEnglish = {'_tok_1': 'VA ADVISORY line', 'dtg': 'Date/Time', 'centre': 'Issuing Centre',
                                 'vname': 'Name of Volcano', 'vloc': 'Location of Volcano or UNKNOWN',
-                                'region': 'Region', 'summit': 'Summit Elevation', 'advnum': 'Advisory Number',
-                                'source1': 'Sources', 'colour': 'Color Code', 'details': 'Eruption Details',
-                                'obsdtg': 'Observed date/time ', 'opreamble': 'observed ash cloud(s)',
+                                'region': 'Region', 'source': 'Height of ash source (AMSL|BLW MSL) or UNKNOWN',
+                                'advnum': 'Advisory Number', 'info': 'Ash report source', 'details': 'Eruption Details',  # noqa: E501
+                                'obsdtg': 'Observed date/time ', 'opreamble': 'Observed ash cloud(s)',
                                 'fpreamble': 'forecast ash cloud position(s)', 'dayhour': 'Day/Hour timestamp',
                                 'top': 'TOP/FL###', 'midlyr': 'FL###/###', 'sfc': 'SFC/FL###',
                                 'box': 'box dimensions', 'latlon': 'latitude/longitude pair',
@@ -129,12 +126,13 @@ class Decoder(tpg.Parser):
                     'translationTime': time.strftime('%Y-%m-%dT%H:%M:%SZ'),
                     'volcanoName': '',
                     'volcanoLocation': '',
-                    'summit': '',
+                    'source': '',
                     'advisoryNumber': '',
                     'sources': '',
                     'details': '',
                     'clouds': {},
                     'remarks': ''}
+
         try:
             result = self.header.search(tac)
             vaa = tac[result.end():].replace('=', '')
@@ -223,9 +221,12 @@ class Decoder(tpg.Parser):
             self.vaa['clouds'][self._fhr] = dict(dtg='', cldLyrs=[])
             #
             # In case there's no dtg group following
-            secs = time.mktime(time.strptime(self.vaa['clouds']['0']['dtg'], '%Y-%m-%dT%H:%M:00Z'))
-            secs += (3600 * int(self._fhr))
-            self.vaa['clouds'][self._fhr]['dtg'] = time.strftime('%Y-%m-%dT%H:%M:00Z', time.gmtime(secs))
+            try:
+                secs = time.mktime(time.strptime(self.vaa['clouds']['0']['dtg'], '%Y-%m-%dT%H:%M:00Z'))
+                secs += (3600 * int(self._fhr))
+                self.vaa['clouds'][self._fhr]['dtg'] = time.strftime('%Y-%m-%dT%H:%M:00Z', time.gmtime(secs))
+            except KeyError:
+                pass
 
     def dtg(self, s):
 
@@ -251,11 +252,11 @@ class Decoder(tpg.Parser):
 
             tms = self.vaa['issueTime']['tms'][:]
             tms[2] = int(result.group('day'))
-            if tms[2] > self.vaa['issueTime']['tms'][2]:
-                tms[1] -= 1
-                if tms[1] == 0:
-                    tms[1] = 12
-                    tms[0] -= 1
+            if tms[2] < self.vaa['issueTime']['tms'][2]:
+                tms[1] += 1
+                if tms[1] > 12:
+                    tms[1] = 1
+                    tms[0] += 1
 
             hhmm = result.group('time')
             tms[3] = int(hhmm[0:2])
@@ -342,25 +343,27 @@ class Decoder(tpg.Parser):
 
         self.vaa['status'] = s.split(':', 1)[1].strip()
 
-    def summit(self, s):
+    def source(self, s):
 
-        result = self.lexer.tokens[self.lexer.cur_token.name][0].match(s)
-        self.vaa['summit'] = result.groupdict(s.split(':', 1)[1].strip())
-        self.vaa['summit']['uom'] = {'FT': '[ft_i]'}.get(self.vaa['summit']['uom'], 'm')
+        if 'UNKNOWN' in s:
+            self.vaa['source'] = None
+        else:
+            result = self.lexer.tokens[self.lexer.cur_token.name][0].match(s)
+            self.vaa['source'] = result.groupdict()
+            try:
+                if self.vaa['source']['ref'][0] == 'B':
+                    self.vaa['source']['elevation'] = f"-{self.vaa['source']['elevation']}"
+            except (TypeError, KeyError):
+                pass
 
     def advnum(self, s):
 
         result = self.lexer.tokens[self.lexer.cur_token.name][0].match(s)
         self.vaa['advisoryNumber'] = result.group(1)
 
-    def source(self, s, condition):
+    def info(self, s):
 
         self.vaa['sources'] = ' '.join(s[12:].split())
-
-    def colour(self, s):
-
-        result = self.lexer.tokens[self.lexer.cur_token.name][0].match(s)
-        self.vaa['colourCode'] = result.group(1)
 
     def details(self, s):
 
@@ -488,11 +491,6 @@ class Decoder(tpg.Parser):
         spos = 0
         result = self._reWinds.search(s)
 
-        if result is None:
-            token_object = self.lexer.token()
-            raise MissingAirSpaceWinds((token_object.line, token_object.column), 'For VA NOT IDENTIFIABLE conditions, '
-                                       'wind information shall be provided')
-
         self._cloud = dict(nil=self.lexer.cur_token.name)
         while result:
             try:
@@ -558,7 +556,7 @@ class Decoder(tpg.Parser):
                 lat2, lon2 = [float(x) for x in b.split(' ')]
                 #
                 # Find perpendicular to vector
-                v = complex((lon2 - lon1), (lat2 - lat1)) * 1j
+                v = complex((lon2 - lon1), (lat2 - lat1)) * complex(0.0, 1.0)
                 newpolygon.append(deu.computeLatLon(lat1, lon1, math.degrees(cmath.phase(v)), distance, radius))
 
             newpolygon.append(deu.computeLatLon(lat2, lon2, math.degrees(cmath.phase(v)), distance, radius))
@@ -571,7 +569,7 @@ class Decoder(tpg.Parser):
                 lat2, lon2 = [float(x) for x in b.split(' ')]
                 #
                 # Find perpendicular to vector
-                v = complex((lon2 - lon1), (lat2 - lat1)) * 1j
+                v = complex((lon2 - lon1), (lat2 - lat1)) * complex(0.0, 1.0)
                 newpolygon.append(deu.computeLatLon(lat1, lon1, math.degrees(cmath.phase(v)), distance, radius))
 
             newpolygon.append(deu.computeLatLon(lat2, lon2, math.degrees(cmath.phase(v)), distance, radius))
@@ -591,6 +589,16 @@ class Decoder(tpg.Parser):
             try:
                 if not deu.isCCW(fpolygon):
                     cloudInfo['pnts'].reverse()
+                #
+                # Convert any longitudes greater than 180 degrees to negative values (signifying west longitudes)
+                new_pnts = []
+                for pnt in cloudInfo['pnts']:
+                    lat, lon = [float(z) for z in pnt.split(' ')]
+                    if lon > 180:
+                        lon -= 360
+                    new_pnts.append(('%.3f %.3f' % (lat, lon)))
+
+                cloudInfo['pnts'] = new_pnts
 
             except ValueError as msg:
                 self._Logger.info(msg)
