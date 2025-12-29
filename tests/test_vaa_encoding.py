@@ -6,92 +6,75 @@ from gifts.common import xmlUtilities as deu
 
 encoder = VAAE.Encoder()
 
-first_siblings = ['issueTime', 'issuingVolcanicAshAdvisoryCentre', 'volcano', 'stateOrRegion', 'summitElevation',
-                  'advisoryNumber', 'informationSource', 'colourCode', 'eruptionDetails', 'observation', 'forecast',
+first_siblings = ['issueTime', 'issuingVolcanicAshAdvisoryCentre', 'volcano', 'stateOrRegion', 'sourceElevationAMSL',
+                  'advisoryNumber', 'informationSource', 'eruptionDetails', 'observation', 'forecast',
                   'forecast', 'forecast', 'remarks', 'nextAdvisoryTime']
 
 aixm = '{http://www.aixm.aero/schema/5.1.1}'
 find_aixm = './/*%s' % aixm
-gml = '{http://www.opengis.net/gml/3.2}'
-find_gml = './/*%s' % gml
+find_gml = './/*{http://www.opengis.net/gml/3.2}'
 iwxxm = '{%s}' % des.IWXXM_URI
-find_iwxxm = './/*%s' % iwxxm
-xhref = '{http://www.w3.org/1999/xlink}href'
 
-
-def PP(tree):
-    def indent(elem, level=0):
-        i = "\n" + level * "  "
-        if len(elem):
-            if not elem.text or not elem.text.strip():
-                elem.text = i + "  "
-            if not elem.tail or not elem.tail.strip():
-                elem.tail = i
-            for elem in elem:
-                indent(elem, level + 1)
-                if not elem.tail or not elem.tail.strip():
-                    elem.tail = i
-            else:
-                if level and (not elem.tail or not elem.tail.strip()):
-                    elem.tail = i
-    indent(tree)
-    print(ET.tostring(tree).decode())
-
-
-codes = deu.parseCodeRegistryTables(des.CodesFilePath, [des.COLOUR_CODES, des.NIL])
-
-des.TRANSLATOR = True
-
-
-def test_vaaFailureModes():
-
-    import gifts.vaaDecoder as vD
-    decoder = vD.Decoder()
-
-    test = """FVXX23 KNES 151247
-"""
-    result = decoder(test)
-    assert 'err_msg' in result
-
-    test = """FVXX01 LFPW 311315 RRA
+exercise = """FVAU03 ADRM 150252
 VA ADVISORY
-VAAC: TOULOUSE"""
+STATUS: EXERCISE
+DTG: 20251215/0000Z
+VAAC: NONE
+VOLCANO: UNKNOWN
+PSN: UNKNOWN
+AREA: UNKNOWN
+SOURCE ELEV: UNKNOWN
+ADVISORY NR: 0000/0
+INFO SOURCE: NONE
+ERUPTION DETAILS: NONE
+EST VA DTG: NOT PROVIDED
+EST VA CLD: NOT PROVIDED
+FCST VA CLD +6HR: 15/0600ZNOT PROVIDED
+FCST VA CLD +12HR: 15/1200Z NOT AVBL
+FCST VA CLD +18HR: 15/1800Z NO VA EXP
+RMK: NONE
+NXT ADVISORY: NO FURTHER ADVISORIES"""
 
-    bulletin = encoder.encode(test)
-    result = bulletin.pop()
-    assert len(result) == 2
-    for num, child in enumerate(result):
-        assert child.tag == first_siblings[num]
-    assert len(result.get('translationFailedTAC')) > 0
-
-    test = """FVXX01 LFPW 311315 RRA
+fuego = """FVXX23 KNES 171857
 VA ADVISORY
-DTG: 20191231/1315Z
-VAAC: TOULOUSE
-<--PARSER HALTS HERE"""
+DTG: 20251217/1857Z
+VAAC: WASHINGTON
+VOLCANO: FUEGO 342090
+PSN: N1428 W09052
+AREA: GUATEMALA
+SOURCE ELEV: 12346 FT AMSL
+ADVISORY NR: 2025/682
+INFO SOURCE: GOES-19. NWP MODELS.
+ERUPTION DETAILS: ONGOING VA EMS
+OBS VA DTG: 17/1830Z
+OBS VA CLD: SFC/FL140 N1431 W09105 - N1428 W09052
+- N1428 W09052 - N1427 W09105 - N1431 W09105 MOV
+W 10KT
+FCST VA CLD +6HR: 18/0030Z SFC/FL140 N1432 W09105
+- N1428 W09053 - N1428 W09052 - N1426 W09105 -
+N1432 W09105
+FCST VA CLD +12HR: 18/0630Z SFC/FL140 N1432
+W09105 - N1428 W09053 - N1428 W09052 - N1426
+W09105 - N1432 W09105
+FCST VA CLD +18HR: 18/1230Z SFC/FL140 N1432
+W09105 - N1428 W09053 - N1428 W09053 - N1426
+W09105 - N1432 W09105
+RMK: VA NOT DETECTED ON STLT DUE TO WX CLDS IN
+SUMMIT AREA. VA EMS LIKELY CONTINUE GIVEN RECENT
+ACTVTY. NO CHG FCST TO MDL WINDS AT FL NXT 18 HR.
+...KONON
+NXT ADVISORY: WILL BE ISSUED BY 20251218/0115Z"""
 
-    bulletin = encoder.encode(test)
-    result = bulletin.pop()
-    assert len(result) == 2
-    for num, child in enumerate(result):
-        assert child.tag == first_siblings[num]
-    assert len(result.get('translationFailedTAC')) > 0
-
-
-def test_vaaNoWinds():
-    import gifts.vaaDecoder as vD
-
-    test = """FVAU03 ADRM 150252
+semeru = """FVAU03 ADRM 150252
 VA ADVISORY
 DTG: 20200615/0252Z
 VAAC: DARWIN
 VOLCANO: SEMERU 263300
 PSN: S0806 E11255
 AREA: INDONESIA
-SUMMIT ELEV: 3676M
+SOURCE ELEV: 3676M AMSL
 ADVISORY NR: 2020/96
 INFO SOURCE: CVGHM, HIMAWARI-8
-AVIATION COLOUR CODE: ORANGE
 ERUPTION DETAILS: GROUND REPORT OF VA ERUPTION TO FL130 AT
 15/0237Z
 OBS VA DTG: 15/0252Z
@@ -103,55 +86,56 @@ RMK: CVGHM VONA REPORTS ERUPTION TO FL130 MOVING TO WEST AT
 15/0237Z, HOWEVER VA CANNOT BE IDENTIFIED ON SATELLITE
 IMAGERY DUE TO MET CLOUD IN AREA. ADVISORY WILL BE UPDATED
 IF NEW INFORMATION IS RECEIVED.
-NXT ADVISORY: NO FURTHER ADVISORIES
-"""
-    decoder = vD.Decoder()
-    result = decoder(test)
-    assert 'err_msg' in result
+NXT ADVISORY: NO FURTHER ADVISORIES"""
+
+#
+# Get WMO NIL reason code concepts
+codes = deu.parseCodeRegistryTables(des.CodesFilePath, [des.NIL])
+des.TRANSLATOR = True
 
 
-def test_vaaWndDirection():
+def test_vaaFailureModes():
 
     import gifts.vaaDecoder as vD
-
-    test = """FVAU03 ADRM 150252
-VA ADVISORY
-DTG: 20200615/0252Z
-VAAC: DARWIN
-VOLCANO: SEMERU 263300
-PSN: S0806 E11255
-AREA: INDONESIA
-SUMMIT ELEV: 3676M
-ADVISORY NR: 2020/96
-INFO SOURCE: CVGHM, HIMAWARI-8
-AVIATION COLOUR CODE: ORANGE
-ERUPTION DETAILS: GROUND REPORT OF VA ERUPTION TO FL130 AT
-15/0237Z
-OBS VA DTG: 15/0252Z
-OBS VA CLD: TOP FL550 N4130 E01415 - N3745 E02145 - N3500 E03015 - N3400 E02930 -
-N3845 E01415 - N4030 E01230 - N4130 W01415 MOV NS 5KT
-FCST VA CLD +6 HR: 15/0852Z NO VA EXP
-FCST VA CLD +12 HR: 15/1452Z NO VA EXP
-FCST VA CLD +18 HR: 15/2052Z NO VA EXP
-RMK: CVGHM VONA REPORTS ERUPTION TO FL130 MOVING TO WEST AT
-15/0237Z, HOWEVER VA CANNOT BE IDENTIFIED ON SATELLITE
-IMAGERY DUE TO MET CLOUD IN AREA. ADVISORY WILL BE UPDATED
-IF NEW INFORMATION IS RECEIVED.
-NXT ADVISORY: NO FURTHER ADVISORIES
-"""
-
     decoder = vD.Decoder()
-    result = decoder(test)
+
+    text = """FVXX23 KNES 151247
+"""
+    result = decoder(text)
     assert 'err_msg' in result
 
-
-def test_vaaTest():
-
-    test = """FVXX23 KNES 151247
+    text = """FVXX01 LFPW 311315 RRA
 VA ADVISORY
-STATUS: TEST="""
+VAAC: TOULOUSE"""
 
-    bulletin = encoder.encode(test)
+    bulletin = encoder.encode(text)
+    result = bulletin.pop()
+    assert len(result) == 2
+    for num, child in enumerate(result):
+        assert child.tag == first_siblings[num]
+    assert len(result.get('translationFailedTAC')) > 0
+
+    text = """FVXX01 LFPW 311315 RRA
+VA ADVISORY
+DTG: 20191231/1315Z
+VAAC: TOULOUSE
+<--PARSER HALTS HERE"""
+
+    bulletin = encoder.encode(text)
+    result = bulletin.pop()
+    assert len(result) == 2
+    for num, child in enumerate(result):
+        assert child.tag == first_siblings[num]
+    assert len(result.get('translationFailedTAC')) > 0
+
+
+def test_nonOperationalMessages():
+
+    text = """FVXX23 KNES 151247
+VA ADVISORY
+STATUS: TEST"""
+
+    bulletin = encoder.encode(text)
     result = bulletin.pop()
     assert len(result) == 2
     for num, child in enumerate(result):
@@ -160,765 +144,411 @@ STATUS: TEST="""
     assert result.get('permissibleUsage') == 'NON-OPERATIONAL'
     assert result.get('permissibleUsageReason') == 'TEST'
 
-    test = """FVUS01 KNES 312158
-VA ADVISORY
-STATUS: TEST
-DTG: 20191130/2200Z
-VAAC: WASHINGTON
-VOLCANO: UNNAMED
-PSN: UNKNOWN
-AREA: CHESAPEAKE BAY
-SUMMIT ELEV: 0 FT
-ADVISORY NR: 2019/1193
-INFO SOURCE: TEST
-AVIATION COLOUR CODE: NOT GIVEN
-ERUPTION DETAILS: UNKNOWN
-EST VA DTG: 30/2200Z
-EST VA CLD: VA NOT IDENTIFIABLE FM SATELLITE DATA WIND FL200/300 260/100MPS
-FCST VA CLD +6 HR: NOT PROVIDED
-FCST VA CLD +12 HR: NOT AVBL
-FCST VA CLD +18 HR: NO VA EXP
-RMK: NIL
-NXT ADVISORY: NO LATER THAN 20191201/0400Z="""
+    text = exercise
 
-    bulletin = encoder.encode(test)
+    bulletin = encoder.encode(text)
     result = bulletin.pop()
-    assert len(result) == len(first_siblings)
-    for num, child in enumerate(result):
-        assert child.tag == first_siblings[num]
-
-    assert result.get('permissibleUsage') == 'NON-OPERATIONAL'
-    assert result.get('permissibleUsageReason') == 'TEST'
-
-    tree = ET.XML(ET.tostring(result))
-
-    for cnt, element in enumerate(tree):
-
-        if cnt == 0:
-            timePosition = element.find('%stimePosition' % find_gml)
-            assert timePosition.text == '2019-11-30T22:00:00Z'
-        elif cnt == 1:
-            name = element.find('%sname' % find_aixm)
-            assert name.text == 'WASHINGTON'
-            mwotype = element.find('%stype' % find_aixm)
-            assert mwotype.text == 'OTHER:VAAC'
-        elif cnt == 2:
-            name = element.find('.//*{http://def.wmo.int/metce/2013}name')
-            assert name.text == 'UNNAMED'
-            position = element.find('.//*{http://def.wmo.int/metce/2013}position')
-            assert position.get('nilReason') == codes[des.NIL][des.UNKNWN][0]
-            edate = element.find('.//*{http://def.wmo.int/metce/2013}eruptionDate')
-            assert edate.text == '2019-11-30T22:00:00Z'
-        elif cnt == 3:
-            assert element.text == 'CHESAPEAKE BAY'
-        elif cnt == 4:
-            assert element.text == '0'
-            assert element.get('uom') == '[ft_i]'
-        elif cnt == 5:
-            assert element.text == '2019/1193'
-        elif cnt == 6:
-            assert element.text == 'TEST'
-        elif cnt == 7:
-            assert element.get('nilReason') == codes[des.NIL][des.WTHLD][0]
-        elif cnt == 8:
-            assert element.get('nilReason') == codes[des.NIL][des.UNKNWN][0]
-        elif cnt == 9:
-            assert element[0].get('status') == 'NOT_IDENTIFIABLE'
-            assert element[0].get('isEstimated') == 'true'
-            timePosition = element.find('%stimePosition' % find_gml)
-            assert timePosition.text == '2019-11-30T22:00:00Z'
-            wind = element.find('%swind' % find_iwxxm)
-            assert wind[0].get('variableWindDirection') == 'false'
-            layer = wind.find('%sAirspaceLayer' % find_aixm)
-            assert layer[0].tag == '%supperLimit' % aixm
-            assert layer[1].tag == '%supperLimitReference' % aixm
-            assert layer[2].tag == '%slowerLimit' % aixm
-            assert layer[3].tag == '%slowerLimitReference' % aixm
-            assert layer[0].text == '300'
-            assert layer[1].text == 'STD'
-            assert layer[2].text == '200'
-            assert layer[3].text == 'STD'
-            assert wind[0][1].tag == '%swindDirection' % iwxxm
-            assert wind[0][1].text == '260'
-            assert wind[0][2].tag == '%swindSpeed' % iwxxm
-            assert wind[0][2].text == '100'
-            assert wind[0][2].get('uom') == 'm/s'
-        elif 9 < cnt < 13:
-            timePosition = element.find('%stimePosition' % find_gml)
-            if cnt == 10:
-                assert element[0].get('status') == 'NOT_PROVIDED'
-                assert timePosition.text == '2019-12-01T04:00:00Z'
-            elif cnt == 11:
-                assert element[0].get('status') == 'NOT_AVAILABLE'
-                assert timePosition.text == '2019-12-01T10:00:00Z'
-            elif cnt == 12:
-                assert element[0].get('status') == 'NO_VOLCANIC_ASH_EXPECTED'
-                assert timePosition.text == '2019-12-01T16:00:00Z'
-        elif cnt == 13:
-            assert element.get('nilReason') == codes[des.NIL][des.NA][0]
-        elif cnt == 14:
-            timePosition = element.find('%stimePosition' % find_gml)
-            assert timePosition.text == '2019-12-01T04:00:00Z'
-            assert timePosition.get('indeterminatePosition') == 'before'
-
-
-def test_vaaExercise():
-
-    test = """FVXX01 LFPW 311315 RRA
-VA ADVISORY
-STATUS: EXER
-DTG: 20191231/1315Z
-VAAC: TOULOUSE
-VOLCANO: CAMPI FLEGREI 211010
-PSN: N40 E014
-AREA: ITALY
-SUMMIT ELEV: 458M
-ADVISORY NR: 2019/1
-INFO SOURCE: EXERCISE EXERCISE EXERCISE
-AVIATION COLOUR CODE: NIL
-ERUPTION DETAILS: ERUPTION AT 20191231/1241Z EXERCISE EXERCISE
-EXERCISE
-OBS VA DTG: 31/1300Z
-OBS VA CLD: SFC/FL100 200KM WID LINE BTN N30 W07530 - N40 W070 MOV N
-99KMH
-FL100/400 100NM WID LINE BTN S40 E01615 - S3930 E01415 MOV S 99KT
-TOP FL550 N4130 E01415 - N3745 E02145 - N3500 E03015 - N3400 E02930 -
-N3845 E01415 - N4030 E01230 - N4130 W01415 MOV SE 40KT
-FCST VA CLD +6 HR: 31/1800Z NOT AVBL
-FCST VA CLD +12 HR: 01/0000Z NO VA EXP
-FCST VA CLD +18 HR: 01/0600Z SFC/FL100 N4130 E01715 - N3615 E01830 -
-N3645 E01430 - N3230 E01430 - N3245 E00830 - N3700 E00730 - N3945
-E00115 - N4530 E00815 - N4700 E01330 - N4300 E01330 - N4130 E01715
-FL100/390 N3715 E00645 - N4000 W00545 - N3545 W01415 - N3700 W02130 -
-N4130 W02300 - N4330 W01630 - N4115 W01430 - N4300 E00145 - N4615
-E00345 - N5215 E02630 - N4930 E03500 - N4630 E03415 - N4715 E02730 -
-N4445 E01900 - N3730 E01515 - N3715 E00645  FL390/550 N4530 E01545 -
-N3800 E02330 - N3330 E03230 - N3345 E03800 - N3815 E04445 - N3630
-E04630 - N2930 E03715 - N3230 E02530 - N41 E013 - N4530 E01545
-RMK:  EXERCISE PLEASE DISREGARD EXERCISE EXERCISE
-NXT ADVISORY: NO FURTHER ADVISORIES="""
-
-    bulletin = encoder.encode(test)
-    result = bulletin.pop()
-    assert len(result) == len(first_siblings)
-    for num, child in enumerate(result):
-        assert child.tag == first_siblings[num]
 
     assert result.get('permissibleUsage') == 'NON-OPERATIONAL'
     assert result.get('permissibleUsageReason') == 'EXERCISE'
 
     tree = ET.XML(ET.tostring(result))
+    #
+    # Check all mandatory items
+    for cnt, child in enumerate(result):
+        assert child.tag == first_siblings[cnt]
+    #
+    # Look at each child element in detail
     for cnt, element in enumerate(tree):
-
+        #
+        # issueTime
         if cnt == 0:
             timePosition = element.find('%stimePosition' % find_gml)
-            assert timePosition.text == '2019-12-31T13:15:00Z'
+            assert timePosition.text == '2025-12-15T00:00:00Z'
+        #
+        # issuing centre
         elif cnt == 1:
             name = element.find('%sname' % find_aixm)
-            assert name.text == 'TOULOUSE'
+            assert name.text == 'NONE'
             mwotype = element.find('%stype' % find_aixm)
             assert mwotype.text == 'OTHER:VAAC'
+        #
+        # volcano details
         elif cnt == 2:
-            name = element[0][0]
-            assert name.text == 'CAMPI FLEGREI 211010'
-            position = element.find('%spos' % find_gml)
-            assert position.text == '40.000 14.000'
-            edate = element.find('.//*{http://def.wmo.int/metce/2013}eruptionDate')
-            assert edate.text == '2019-12-31T12:41:00Z'
+            volcano = element.find('{http://def.wmo.int/metce/2013}Volcano')
+            assert volcano is not None
+
+            name = element.find('*{http://def.wmo.int/metce/2013}name')
+            assert name.text == 'UNKNOWN'
+
+            position = element.find('*{http://def.wmo.int/metce/2013}position')
+            assert position.get('nilReason') == codes[des.NIL][des.UNKNWN][0]
+
+            edate = element.find('*{http://def.wmo.int/metce/2013}eruptionDate')
+            assert edate is None
+        #
+        # stateOrRegion element
         elif cnt == 3:
-            assert element.text == 'ITALY'
-        elif cnt == 4:
-            assert element.text == '458'
-            assert element.get('uom') == 'm'
-        elif cnt == 5:
-            assert element.text == '2019/1'
-        elif cnt == 6:
-            assert element.text == 'EXERCISE EXERCISE EXERCISE'
-        elif cnt == 7:
-            assert element.get('nilReason') == codes[des.NIL][des.MSSG][0]
-        elif cnt == 8:
-            assert element.text == 'ERUPTION AT 20191231/1241Z EXERCISE EXERCISE EXERCISE'
-        elif cnt == 9:
-            assert element[0].get('status') == 'IDENTIFIABLE'
-            assert element[0].get('isEstimated') == 'false'
-            timePosition = element.find('%stimePosition' % find_gml)
-            assert timePosition.text == '2019-12-31T13:00:00Z'
-            ashCloudList = element.findall('%sashCloud' % find_iwxxm)
-            assert len(ashCloudList) == 3
-
-            for acnt, ashCloud in enumerate(ashCloudList):
-
-                volume = ashCloud.find('%sAirspaceVolume' % find_aixm)
-                if acnt == 0:
-
-                    assert volume[0].tag == '%supperLimit' % aixm
-                    assert volume[1].tag == '%supperLimitReference' % aixm
-                    assert volume[2].tag == '%slowerLimit' % aixm
-                    assert volume[3].tag == '%slowerLimitReference' % aixm
-                    assert volume[0].text == '100'
-                    assert volume[1].text == 'STD'
-                    assert volume[2].text == 'GND'
-                    assert volume[3].text == 'SFC'
-                    assert ashCloud[0][1].tag == '%sdirectionOfMotion' % iwxxm
-                    assert ashCloud[0][2].tag == '%sspeedOfMotion' % iwxxm
-                    assert ashCloud[0][1].text == '360'
-                    assert ashCloud[0][2].text == '99'
-                    assert ashCloud[0][2].get('uom') == 'km/h'
-                    posList = ashCloud.find('%sposList' % find_gml)
-                    assert posList.text == '30.433 -76.409 29.567 -74.591 39.567 -68.972 40.433 -71.028 30.433 -76.409'
-
-                elif acnt == 1:
-
-                    assert volume[0].text == '400'
-                    assert volume[1].text == 'STD'
-                    assert volume[2].text == '100'
-                    assert volume[3].text == 'STD'
-                    assert ashCloud[0][1].text == '180'
-                    assert ashCloud[0][2].text == '99'
-                    assert ashCloud[0][2].get('uom') == '[kn_i]'
-                    posList = ashCloud.find('%sposList' % find_gml)
-                    assert posList.text == '-40.808 15.986 -39.192 16.514 -38.692 14.512 -40.308 13.988 -40.808 15.986'
-
-                elif acnt == 2:
-                    assert volume[0].text == '550'
-                    assert volume[1].text == 'STD'
-                    assert volume[2].get('nilReason') == des.MSSG
-                    assert ashCloud[0][1].text == '135'
-                    assert ashCloud[0][2].text == '40'
-                    assert ashCloud[0][2].get('uom') == '[kn_i]'
-
-        elif 9 < cnt < 13:
-            timePosition = element.find('%stimePosition' % find_gml)
-            if cnt == 10:
-                assert element[0].get('status') == 'NOT_AVAILABLE'
-                assert timePosition.text == '2019-12-31T18:00:00Z'
-            elif cnt == 11:
-                assert element[0].get('status') == 'NO_VOLCANIC_ASH_EXPECTED'
-                assert timePosition.text == '2020-01-01T00:00:00Z'
-            elif cnt == 12:
-                assert element[0].get('status') == 'PROVIDED'
-                assert timePosition.text == '2020-01-01T06:00:00Z'
-                ashCloudList = element.findall('%sashCloud' % find_iwxxm)
-                assert len(ashCloudList) == 3
-
-                for acnt, ashCloud in enumerate(ashCloudList):
-
-                    volume = ashCloud.find('%sAirspaceVolume' % find_aixm)
-                    if acnt == 0:
-                        assert volume[0].tag == '%supperLimit' % aixm
-                        assert volume[1].tag == '%supperLimitReference' % aixm
-                        assert volume[2].tag == '%slowerLimit' % aixm
-                        assert volume[3].tag == '%slowerLimitReference' % aixm
-                        assert volume[0].text == '100'
-                        assert volume[1].text == 'STD'
-                        assert volume[2].text == 'GND'
-                        assert volume[3].text == 'SFC'
-                    elif cnt == 1:
-                        assert volume[0].text == '390'
-                        assert volume[1].text == 'STD'
-                        assert volume[2].text == '100'
-                        assert volume[3].text == 'STD'
-                    elif cnt == 2:
-                        assert volume[0].text == '550'
-                        assert volume[2].text == '390'
-
-        elif cnt == 13:
-            assert element.text == 'EXERCISE PLEASE DISREGARD EXERCISE EXERCISE'
-        elif cnt == 14:
-            assert element.get('nilReason') == codes[des.NIL][des.NA][0]
-
-
-def test_vaaNormal():
-
-    test = """FVFE01 RJTD 111803
-VA ADVISORY
-DTG: 20200511/1803Z
-VAAC: TOKYO
-VOLCANO: ASOSAN 282110
-PSN: N3253 E13106
-AREA: JAPAN
-SUMMIT ELEV: 1592M
-ADVISORY NR: 2020/547
-INFO SOURCE: HIMAWARI-8 JMA
-AVIATION COLOUR CODE: UNKNOWN
-ERUPTION DETAILS: ACTIVITY CONT. VA AT 20200511/1800Z FL050 EXTD N
-OBS VA DTG: 11/1750Z
-OBS VA CLD: VA NOT IDENTIFIABLE FM SATELLITE DATA WIND SFC/FL050 VRB10MPS
-FCST VA CLD +6 HR: NOT AVBL
-FCST VA CLD +12 HR: NOT AVBL
-FCST VA CLD +18 HR: NOT AVBL
-RMK: WE WILL ISSUE FURTHER ADVISORY IF VA IS DETECTED IN SATELLITE
-IMAGERY.
-NXT ADVISORY: NO FURTHER ADVISORIES="""
-
-    bulletin = encoder.encode(test)
-    result = bulletin.pop()
-    assert len(result) == len(first_siblings)
-    for num, child in enumerate(result):
-        assert child.tag == first_siblings[num]
-
-    assert result.get('permissibleUsage') == 'OPERATIONAL'
-    assert result.get('permissibleUsageReason') is None
-
-    tree = ET.XML(ET.tostring(result))
-
-    for cnt, element in enumerate(tree):
-
-        if cnt == 0:
-            timePosition = element.find('%stimePosition' % find_gml)
-            assert timePosition.text == '2020-05-11T18:03:00Z'
-        elif cnt == 1:
-            name = element.find('%sname' % find_aixm)
-            assert name.text == 'TOKYO'
-        elif cnt == 2:
-            name = element.find('.//*{http://def.wmo.int/metce/2013}name')
-            assert name.text == 'ASOSAN 282110'
-            position = element.find('%spos' % find_gml)
-            assert position.text == '32.884 131.100'
-            edate = element.find('.//*{http://def.wmo.int/metce/2013}eruptionDate')
-            assert edate.text == '2020-05-11T18:00:00Z'
-        elif cnt == 3:
-            assert element.text == 'JAPAN'
-        elif cnt == 4:
-            assert element.text == '1592'
-            assert element.get('uom') == 'm'
-        elif cnt == 5:
-            assert element.text == '2020/547'
-        elif cnt == 6:
-            assert element.text == 'HIMAWARI-8 JMA'
-        elif cnt == 7:
             assert element.get('nilReason') == codes[des.NIL][des.UNKNWN][0]
-        elif cnt == 8:
-            assert element.text == 'ACTIVITY CONT. VA AT 20200511/1800Z FL050 EXTD N'
-        elif cnt == 9:
-            assert element[0].get('status') == 'NOT_IDENTIFIABLE'
-            assert element[0].get('isEstimated') == 'false'
-            timePosition = element.find('%stimePosition' % find_gml)
-            assert timePosition.text == '2020-05-11T17:50:00Z'
-            wind = element.find('%swind' % find_iwxxm)
-            assert wind[0].get('variableWindDirection') == 'true'
-            layer = wind.find('%sAirspaceLayer' % find_aixm)
-            assert layer[0].tag == '%supperLimit' % aixm
-            assert layer[1].tag == '%supperLimitReference' % aixm
-            assert layer[2].tag == '%slowerLimit' % aixm
-            assert layer[3].tag == '%slowerLimitReference' % aixm
-            assert layer[0].text == '050'
-            assert layer[1].text == 'STD'
-            assert layer[2].text == 'GND'
-            assert layer[3].text == 'SFC'
-            assert wind[0][1].tag == '%swindSpeed' % iwxxm
-            assert wind[0][1].text == '10'
-            assert wind[0][1].get('uom') == 'm/s'
-        elif 9 < cnt < 13:
-            assert element[0].get('status') == 'NOT_AVAILABLE'
-            timePosition = element.find('%stimePosition' % find_gml)
-            if cnt == 10:
-                assert timePosition.text == '2020-05-11T23:50:00Z'
-            elif cnt == 11:
-                assert timePosition.text == '2020-05-12T05:50:00Z'
-            elif cnt == 12:
-                assert timePosition.text == '2020-05-12T11:50:00Z'
-        elif cnt == 13:
-            assert element.text == 'WE WILL ISSUE FURTHER ADVISORY IF VA IS DETECTED IN SATELLITE IMAGERY.'
-        elif cnt == 14:
-            assert element.get('nilReason') == codes[des.NIL][des.NA][0]
-
-    test = """FVAU01 ADRM 312158
-VA ADVISORY
-DTG: 20191130/2200Z
-VAAC: DARWIN
-VOLCANO: DUKONO 268010
-PSN: N0141 E12753
-AREA: INDONESIA
-SUMMIT ELEV: 4380FT
-ADVISORY NR: 2019/1193
-INFO SOURCE: HIMAWARI-8
-AVIATION COLOUR CODE: ORANGE
-ERUPTION DETAILS: CONTINUOUS VA ERUPTION OBS TO FL070 EXT W
-        AT 30/2130Z.
-OBS VA DTG: 30/2200Z
-OBS VA CLD: SFC/FL070 N0140 E12754 - N0146 E12802 - N0149
-        E12756 - N0145 E12736 - N0138 E12742 MOV W 5KT
-FCST VA CLD +6 HR: 01/0400Z SFC/FL070 N0128 E12758 - N0131
-        E12732 - N0147 E12735 - N0204 E12805 - N0143 E12826
-FCST VA CLD +12 HR: 01/1000Z SFC/FL070 N0127 E12749 - N0135
-        E12813 - N0205 E12820 - N0201 E12747 - N0130 E12725
-FCST VA CLD +18 HR: 01/1600Z SFC/FL070 N0124 E12750 - N0133
-        E12724 - N0203 E12739 - N0152 E12812 - N0132 E12809
-RMK: VA OBS EXT TO W ON LATEST SAT IMAGERY. HOWEVER, PARTLY
-        OBSCURED BY MET CLOUD. HEIGHT AND FORECAST BASED ON
-        HIMAWARI-8, MENADO 13/1200Z SOUNDING AND MODEL GUIDANCE. LOW
-        CONFIDENCE IN FORECAST DUE TO LIGHT AND VARIABLE WINDS.
-NXT ADVISORY: WILL BE ISSUED BY 20191201/0400Z="""
-
-    bulletin = encoder.encode(test)
-    result = bulletin.pop()
-    assert len(result) == len(first_siblings)
-    for num, child in enumerate(result):
-        assert child.tag == first_siblings[num]
-
-    assert result.get('permissibleUsage') == 'OPERATIONAL'
-    assert result.get('permissibleUsageReason') is None
-    tree = ET.XML(ET.tostring(result))
-
-    for cnt, element in enumerate(tree):
-
-        if cnt == 0:
-            timePosition = element.find('%stimePosition' % find_gml)
-            assert timePosition.text == '2019-11-30T22:00:00Z'
-        elif cnt == 1:
-            name = element.find('%sname' % find_aixm)
-            assert name.text == 'DARWIN'
-        elif cnt == 2:
-            name = element.find('.//*{http://def.wmo.int/metce/2013}name')
-            assert name.text == 'DUKONO 268010'
-            position = element.find('%spos' % find_gml)
-            assert position.text == '1.683 127.884'
-            edate = element.find('.//*{http://def.wmo.int/metce/2013}eruptionDate')
-            assert edate.text == '2019-11-30T21:30:00Z'
-        elif cnt == 3:
-            assert element.text == 'INDONESIA'
+        #
+        # sourceElevation element
         elif cnt == 4:
-            assert element.text == '4380'
-            assert element.get('uom') == '[ft_i]'
+            assert element.get('nilReason') == codes[des.NIL][des.UNKNWN][0]
+        #
+        # advisory no.
         elif cnt == 5:
-            assert element.text == '2019/1193'
-        elif cnt == 6:
-            assert element.text == 'HIMAWARI-8'
-        elif cnt == 7:
-            assert element.get(xhref) == codes[des.COLOUR_CODES]['ORANGE'][0]
+            assert element.text == '0000/0'
+        #
+        # source and eruption details free text
+        elif 5 < cnt < 8:
+            assert element.text == 'NONE'
+        #
+        # observation
         elif cnt == 8:
-            assert element.text == 'CONTINUOUS VA ERUPTION OBS TO FL070 EXT W AT 30/2130Z.'
-        elif cnt == 9:
-
-            assert element[0].get('status') == 'IDENTIFIABLE'
-            assert element[0].get('isEstimated') == 'false'
-            timePosition = element.find('%stimePosition' % find_gml)
-            assert timePosition.text == '2019-11-30T22:00:00Z'
-            ashCloudList = element.findall('%sashCloud' % find_iwxxm)
-            assert len(ashCloudList) == 1
-
-            for acnt, ashCloud in enumerate(ashCloudList):
-
-                volume = ashCloud.find('%sAirspaceVolume' % find_aixm)
-                if acnt == 0:
-                    assert volume[0].tag == '%supperLimit' % aixm
-                    assert volume[1].tag == '%supperLimitReference' % aixm
-                    assert volume[2].tag == '%slowerLimit' % aixm
-                    assert volume[3].tag == '%slowerLimitReference' % aixm
-                    assert volume[0].text == '070'
-                    assert volume[1].text == 'STD'
-                    assert volume[2].text == 'GND'
-                    assert volume[3].text == 'SFC'
-                    assert ashCloud[0][1].tag == '%sdirectionOfMotion' % iwxxm
-                    assert ashCloud[0][2].tag == '%sspeedOfMotion' % iwxxm
-                    assert ashCloud[0][1].text == '270'
-                    assert ashCloud[0][2].text == '5'
-                    assert ashCloud[0][2].get('uom') == '[kn_i]'
-
-        elif 9 < cnt < 13:
-            timePosition = element.find('%stimePosition' % find_gml)
-            assert element[0].get('status') == 'PROVIDED'
-            ashCloud = element.find('%sashCloud' % find_iwxxm)
-            volume = ashCloud.find('%sAirspaceVolume' % find_aixm)
-            assert volume[0].tag == '%supperLimit' % aixm
-            assert volume[1].tag == '%supperLimitReference' % aixm
-            assert volume[2].tag == '%slowerLimit' % aixm
-            assert volume[3].tag == '%slowerLimitReference' % aixm
-            assert volume[0].text == '070'
-            assert volume[1].text == 'STD'
-            assert volume[2].text == 'GND'
-            assert volume[3].text == 'SFC'
-
-            if cnt == 10:
-                assert timePosition.text == '2019-12-01T04:00:00Z'
-            elif cnt == 11:
-                assert timePosition.text == '2019-12-01T10:00:00Z'
-            elif cnt == 12:
-                assert timePosition.text == '2019-12-01T16:00:00Z'
-
-        elif cnt == 13:
-            assert len(element.text) > 220
-        elif cnt == 14:
-            timePosition = element.find('%stimePosition' % find_gml)
-            assert timePosition.text == '2019-12-01T04:00:00Z'
-            assert timePosition.get('indeterminatePosition') == 'before'
-
-    test = """
-FVAG01 SABM 290615
-VA ADVISORY
-DTG: 20200529/0615Z
-
-VAAC: BUENOS AIRES
-
-VOLCANO: SABANCAYA 354006
-PSN: S1547 W07150
-
-AREA: PERU
-
-SUMMIT ELEV: 19576 FT (5967 M)
-
-ADVISORY NR: 2020/635
-
-INFO SOURCE: GOES-E. GFS. WEBCAM.
-
-AVIATION COLOUR CODE: PURPLE
-
-ERUPTION DETAILS: CONTINUOUS EMISSION
-
-OBS VA DTG: 29/0510Z
-
-OBS VA CLD: SFC/FL240 S1546 W07151 - S1552 W07131
-- S1558 W07137 - S1546 W07151 MOV SE 20KT
-
-FCST VA CLD +6 HR: 29/1100Z SFC/FL240 S1547 W07151
-- S1602 W07113 - S1621 W07134 - S1547 W07151
-
-FCST VA CLD +12 HR: 29/1700Z SFC/FL240 S1547
-W07151 - S1604 W07110 - S1625 W07134 - S1547
-W07151
-
-FCST VA CLD +18 HR: 29/2300Z SFC/FL240 S1547
-W07151 - S1602 W07100 - S1630 W07128 - S1547
-W07151
-
-RMK: VA PLUME IS DETECTED IN STLT IMAGERY MOV SE
-EST FL240. THERMAL WEBCAM SHOWS A CONTINUOUS
-EMISSION WITH INTERMITTENT PUFFS...SMN
-
-NXT ADVISORY: WILL BE ISSUED BY 20200529/1215Z="""
-    colorCode = first_siblings.index('colourCode')
-    first_siblings.pop(colorCode)
-    bulletin = encoder.encode(test)
-    result = bulletin.pop()
-
-    assert len(result) == len(first_siblings)
-    for num, child in enumerate(result):
-        assert child.tag == first_siblings[num]
-
-    first_siblings.insert(colorCode, 'colorCode')
-
-    assert result.get('permissibleUsage') == 'OPERATIONAL'
-    assert result.get('permissibleUsageReason') is None
-    tree = ET.XML(ET.tostring(result))
-
-    for cnt, element in enumerate(tree):
-
-        if cnt == 0:
-            timePosition = element.find('%stimePosition' % find_gml)
-            assert timePosition.text == '2020-05-29T06:15:00Z'
-        elif cnt == 1:
-            name = element.find('%sname' % find_aixm)
-            assert name.text == 'BUENOS AIRES'
-        elif cnt == 2:
-            name = element.find('.//*{http://def.wmo.int/metce/2013}name')
-            assert name.text == 'SABANCAYA 354006'
-            position = element.find('%spos' % find_gml)
-            assert position.text == '-15.783 -71.834'
-            edate = element.find('.//*{http://def.wmo.int/metce/2013}eruptionDate')
-            assert edate.text == '2020-05-29T06:15:00Z'
-        elif cnt == 3:
-            assert element.text == 'PERU'
-        elif cnt == 4:
-            assert element.text == '19576'
-            assert element.get('uom') == '[ft_i]'
-        elif cnt == 5:
-            assert element.text == '2020/635'
-        elif cnt == 6:
-            assert element.text == 'GOES-E. GFS. WEBCAM.'
-        elif cnt == -7:
-            assert element.get('nilReason') == codes[des.NIL][des.WTHLD][0]
-        elif cnt == 7:
-            assert element.text == 'CONTINUOUS EMISSION'
-        elif cnt == 8:
-
-            assert element[0].get('status') == 'IDENTIFIABLE'
-            assert element[0].get('isEstimated') == 'false'
-            timePosition = element.find('%stimePosition' % find_gml)
-            assert timePosition.text == '2020-05-29T05:10:00Z'
-            ashCloudList = element.findall('%sashCloud' % find_iwxxm)
-            assert len(ashCloudList) == 1
-
-            for acnt, ashCloud in enumerate(ashCloudList):
-
-                volume = ashCloud.find('%sAirspaceVolume' % find_aixm)
-                if acnt == 0:
-                    assert volume[0].tag == '%supperLimit' % aixm
-                    assert volume[1].tag == '%supperLimitReference' % aixm
-                    assert volume[2].tag == '%slowerLimit' % aixm
-                    assert volume[3].tag == '%slowerLimitReference' % aixm
-                    assert volume[0].text == '240'
-                    assert volume[1].text == 'STD'
-                    assert volume[2].text == 'GND'
-                    assert volume[3].text == 'SFC'
-                    assert ashCloud[0][1].tag == '%sdirectionOfMotion' % iwxxm
-                    assert ashCloud[0][2].tag == '%sspeedOfMotion' % iwxxm
-                    assert ashCloud[0][1].text == '135'
-                    assert ashCloud[0][2].text == '20'
-                    assert ashCloud[0][2].get('uom') == '[kn_i]'
-
+            assert len(element) == 1
+            # conditions estimated
+            conditions = element.find('%sVolcanicAshObservedOrEstimatedConditions' % iwxxm)
+            assert conditions.get('status') == 'NOT_PROVIDED'
+            assert conditions.get('isEstimated') == 'true'
+        #
+        # forecasts
         elif 8 < cnt < 12:
+            condition = element.find('%sVolcanicAshForecastConditions' % iwxxm)
             timePosition = element.find('%stimePosition' % find_gml)
-            assert element[0].get('status') == 'PROVIDED'
-            ashCloud = element.find('%sashCloud' % find_iwxxm)
-            volume = ashCloud.find('%sAirspaceVolume' % find_aixm)
-            assert volume[0].tag == '%supperLimit' % aixm
-            assert volume[1].tag == '%supperLimitReference' % aixm
-            assert volume[2].tag == '%slowerLimit' % aixm
-            assert volume[3].tag == '%slowerLimitReference' % aixm
-            assert volume[0].text == '240'
-            assert volume[1].text == 'STD'
-            assert volume[2].text == 'GND'
-            assert volume[3].text == 'SFC'
-
             if cnt == 9:
-                assert timePosition.text == '2020-05-29T11:00:00Z'
+                assert condition.get('status') == 'NOT_PROVIDED'
+                assert timePosition.text == '2025-12-15T06:00:00Z'
             elif cnt == 10:
-                assert timePosition.text == '2020-05-29T17:00:00Z'
+                assert condition.get('status') == 'NOT_AVAILABLE'
+                assert timePosition.text == '2025-12-15T12:00:00Z'
             elif cnt == 11:
-                assert timePosition.text == '2020-05-29T23:00:00Z'
+                assert condition.get('status') == 'NO_VOLCANIC_ASH_EXPECTED'
+                assert timePosition.text == '2025-12-15T18:00:00Z'
 
         elif cnt == 12:
-            assert len(element.text) > 80
+            # remarks
+            assert element.text == 'NONE'
         elif cnt == 13:
-            timePosition = element.find('%stimePosition' % find_gml)
-            assert timePosition.text == '2020-05-29T12:15:00Z'
-            assert timePosition.get('indeterminatePosition') == 'before'
+            # NO FURTHER ADVISORIES
+            assert element.get('nilReason') == codes[des.NIL][des.NA][0]
 
-
-def test_unknowns():
-
-    test = """FVAU03 ADRM 150252
-VA ADVISORY
-DTG: 20200615/0252Z
-VAAC: DARWIN
-VOLCANO: SEMERU 263300
-PSN: S0806 E11255
-AREA: UNKNOWN
-SUMMIT ELEV: UNKNOWN
-ADVISORY NR: 2020/96
-INFO SOURCE: CVGHM, HIMAWARI-8
-AVIATION COLOUR CODE: ORANGE
-ERUPTION DETAILS: NO ERUPTION - RE-SUSPENDED ASH
-OBS VA DTG: 15/0252Z
-OBS VA CLD: VA NOT IDENTIFIABLE FM SATELLITE DATA WIND SFC/FL050 090/10MPS
-FCST VA CLD +6 HR: 15/0852Z NO VA EXP
-FCST VA CLD +12 HR: 15/1452Z NO VA EXP
-FCST VA CLD +18 HR: 15/2052Z NO VA EXP
-RMK: RE-SUSPENDED ASH
-NXT ADVISORY: NO FURTHER ADVISORIES
-"""
-    bulletin = encoder.encode(test)
+    text2 = text.replace('EST VA CLD: NOT PROVIDED', 'OBS VA CLD: NOT AVBL')
+    bulletin = encoder.encode(text2)
     result = bulletin.pop()
-    tree = ET.XML(ET.tostring(result))
 
-    element = tree.find('%sstateOrRegion' % iwxxm)
-    assert element.get('nilReason') == codes[des.NIL][des.UNKNWN][0]
-    element = tree.find('%ssummitElevation' % iwxxm)
-    assert element.get('nilReason') == codes[des.NIL][des.UNKNWN][0]
+    assert result[8][0].get('isEstimated') == 'false'
+    assert result[8][0].get('status') == 'NOT_AVAILABLE'
 
-    test = """FVAU03 ADRM 150252
-VA ADVISORY
-DTG: 20200615/0252Z
-VAAC: DARWIN
-VOLCANO: SEMERU 263300
-PSN: S0806 E11255
-AREA: INDONESIA
-SUMMIT ELEV: SFC
-ADVISORY NR: 2020/96
-INFO SOURCE: CVGHM, HIMAWARI-8
-AVIATION COLOUR CODE: ORANGE
-ERUPTION DETAILS: GROUND REPORT OF VA ERUPTION TO FL130 AT
-15/0237Z
-OBS VA DTG: 15/0252Z
-OBS VA CLD: VA NOT IDENTIFIABLE FM SATELLITE DATA WIND SFC/FL050 VRB10MPS
-FCST VA CLD +6 HR: 15/0852Z NO VA EXP
-FCST VA CLD +12 HR: 15/1452Z NO VA EXP
-FCST VA CLD +18 HR: 15/2052Z NO VA EXP
-RMK: CVGHM VONA REPORTS ERUPTION TO FL130 MOVING TO WEST AT
-15/0237Z, HOWEVER VA CANNOT BE IDENTIFIED ON SATELLITE
-IMAGERY DUE TO MET CLOUD IN AREA. ADVISORY WILL BE UPDATED
-IF NEW INFORMATION IS RECEIVED.
-NXT ADVISORY: NO FURTHER ADVISORIES
-"""
-    bulletin = encoder.encode(test)
+
+def test_sourceElevation():
+
+    text = fuego
+    bulletin = encoder.encode(text)
     result = bulletin.pop()
-    tree = ET.XML(ET.tostring(result))
 
-    element = tree.find('%ssummitElevation' % iwxxm)
-    assert element.get('nilReason') == codes[des.NIL][des.NA][0]
+    assert result.get('permissibleUsage') == 'OPERATIONAL'
+    assert result.get('reportStatus') == 'NORMAL'
+    #
+    # Check all mandatory items
+    for cnt, child in enumerate(result):
+        assert child.tag == first_siblings[cnt]
+    #
+    # Source elevation
+    sourceElevation = result[4]
+    assert sourceElevation.text == '12346'
+    assert sourceElevation.get('uom', '[ft_i]')
 
-
-def test_resuspendedash():
-
-    test = """FVAU03 ADRM 150252
-VA ADVISORY
-DTG: 20200615/0252Z
-VAAC: DARWIN
-VOLCANO: SEMERU 263300
-PSN: S0806 E11255
-AREA: UNKNOWN
-SUMMIT ELEV: SFC
-ADVISORY NR: 2020/96
-INFO SOURCE: CVGHM, HIMAWARI-8
-AVIATION COLOUR CODE: ORANGE
-ERUPTION DETAILS: NO ERUPTION - RE-SUSPENDED ASH
-OBS VA DTG: 15/0252Z
-OBS VA CLD: VA NOT IDENTIFIABLE FM SATELLITE DATA WIND SFC/FL050 090/10MPS
-FCST VA CLD +6 HR: 15/0852Z NO VA EXP
-FCST VA CLD +12 HR: 15/1452Z NO VA EXP
-FCST VA CLD +18 HR: 15/2052Z NO VA EXP
-RMK: RE-SUSPENDED ASH
-NXT ADVISORY: NO FURTHER ADVISORIES
-"""
-    bulletin = encoder.encode(test)
+    text = fuego.replace('12346 FT', '3763M')
+    bulletin = encoder.encode(text)
     result = bulletin.pop()
-    tree = ET.XML(ET.tostring(result))
 
-    element = tree.find('%sstateOrRegion' % iwxxm)
-    assert element.get('nilReason') == codes[des.NIL][des.UNKNWN][0]
-    element = tree.find('%ssummitElevation' % iwxxm)
-    assert element.get('nilReason') == codes[des.NIL][des.NA][0]
+    sourceElevation = result[4]
+    assert sourceElevation.text == '3763'
+    assert sourceElevation.get('uom', 'm')
+
+    text = fuego.replace('12346 FT AMSL', '10M BLW MSL')
+    bulletin = encoder.encode(text)
+    result = bulletin.pop()
+
+    sourceElevation = result[4]
+    assert sourceElevation.text == '-10'
+    assert sourceElevation.get('uom', 'm')
+
+    text = fuego.replace('12346 FT AMSL', '0M')
+    bulletin = encoder.encode(text)
+    result = bulletin.pop()
+
+    sourceElevation = result[4]
+    assert sourceElevation.text == '0'
+    assert sourceElevation.get('uom', 'm')
 
 
-def test_multipleAdvisoryStrings():
+def test_volcanoInfo():
 
-    import gifts.vaaDecoder as vD
-    decoder = vD.Decoder()
+    text = fuego
+    bulletin = encoder.encode(text)
+    result = bulletin.pop()
 
-    test = """FVXX27 KNES 191645
-VA ADVISORY
-DTG: 20240319/1645Z
-VAAC: WASHINGTON
-VOLCANO: TEST 999999
-PSN: N3700 W07700
-AREA: US
-SUMMIT ELEV: 32805 FT (9999 M)
-ADVISORY NR: 2024/001
-INFO SOURCE: TEST
-ERUPTION DETAILS: TEST AT 19/1700Z
-OBS VA DTG: 19/1645Z
-OBS VA CLD: VA NOT IDENTIFIABLE FROM SATELLITE
-DATA WIND FL100 300/10KTS
-FCST VA CLD +6HR: 19/2300Z NO VA EXP
-FCST VA CLD +12HR: 20/0500Z NO VA EXP
-FCST VA CLD +18HR: 20/1100Z NO VA EXP
-RMK: THIS IS A VA ADVISORY TEST MSG. MWO TAHITI
-SHOULD NOW ISSUE A SIGMET TEST MSG FOR VA
-ADVISORY IF RECEIVED. ...KIBLER
-NXT ADVISORY:  NO FURTHER ADVISORIES
-"""
-    result = decoder(test)
-    assert 'err_msg' not in result
+    volcano = result[2][0]
+    assert len(volcano) == 2
+    assert volcano.tag == 'Volcano'
+    assert volcano[0].text == 'FUEGO 342090'
+    assert volcano[1][0][0].text == '14.467 -90.867'
+
+    text = fuego.replace('ONGOING VA EMS', 'ERUPTION AT 0530Z')
+    bulletin = encoder.encode(text)
+    result = bulletin.pop()
+
+    volcano = result[2][0]
+    assert len(volcano) == 3
+    assert volcano.tag == 'EruptingVolcano'
+    assert volcano[2].text == '2025-12-17T05:30:00Z'
+
+
+def test_centreName():
+
+    text = fuego
+    bulletin = encoder.encode(text)
+    result = bulletin.pop()
+    #
+    # AIXM padding
+    centre = result[1][0][0][0][2]
+    assert centre.text == 'WASHINGTON'
+
+
+def test_stateOrRegion():
+
+    text = fuego
+    bulletin = encoder.encode(text)
+    result = bulletin.pop()
+
+    state = result[3]
+    assert state.text == 'GUATEMALA'
+
+
+def test_advisoryNumber():
+
+    text = fuego
+    bulletin = encoder.encode(text)
+    result = bulletin.pop()
+
+    state = result[5]
+    assert state.text == '2025/682'
+
+
+def test_infoSource():
+
+    text = fuego
+    bulletin = encoder.encode(text)
+    result = bulletin.pop()
+
+    infoSource = result[6]
+    assert infoSource.text == 'GOES-19. NWP MODELS.'
+
+
+def test_eruptionDetails():
+
+    text = fuego
+    bulletin = encoder.encode(text)
+    result = bulletin.pop()
+
+    infoSource = result[7]
+    assert infoSource.text == 'ONGOING VA EMS'
+
+
+def test_remarks():
+
+    text = fuego
+    bulletin = encoder.encode(text)
+    result = bulletin.pop()
+
+    remarks = result[12]
+    assert remarks.text == ' '.join(['VA NOT DETECTED ON STLT DUE TO WX CLDS IN SUMMIT AREA.',
+                                     'VA EMS LIKELY CONTINUE GIVEN RECENT ACTVTY.',
+                                     'NO CHG FCST TO MDL WINDS AT FL NXT 18 HR.', '...KONON'])
+
+
+def test_nextTime():
+
+    text = fuego
+    bulletin = encoder.encode(text)
+    result = bulletin.pop()
+
+    nextTime = result[13][0][0]
+
+    assert nextTime.text == '2025-12-18T01:15:00Z'
+    assert nextTime.get('indeterminatePosition') == 'before'
+
+    text = fuego.replace('WILL BE ISSUED BY', 'NO LATER THAN')
+    bulletin = encoder.encode(text)
+    result = bulletin.pop()
+
+    nextTime = result[13][0][0]
+    assert nextTime.get('indeterminatePosition') == 'before'
+
+    text = fuego.replace('WILL BE ISSUED BY', '')
+    bulletin = encoder.encode(text)
+    result = bulletin.pop()
+
+    nextTime = result[13][0][0]
+    assert nextTime.get('indeterminatePosition') is None
+
+
+def test_observedCloudVerticalExtent():
+
+    text = fuego
+    bulletin = encoder.encode(text)
+    result = bulletin.pop()
+
+    observation = result[8][0]
+
+    assert observation.get('isEstimated') == 'false'
+    assert observation.get('status') == 'PROVIDED'
+    assert observation[0][0][0].text == '2025-12-17T18:30:00Z'
+
+    obsAshCloud = observation[1][0][0][0]
+    assert obsAshCloud[0].tag == 'aixm:upperLimit'
+    assert obsAshCloud[0].get('uom') == 'FL'
+    assert obsAshCloud[0].text == '140'
+    assert obsAshCloud[1].tag == 'aixm:upperLimitReference'
+    assert obsAshCloud[1].text == 'STD'
+
+    assert obsAshCloud[2].tag == 'aixm:lowerLimit'
+    assert obsAshCloud[2].get('uom') is None
+    assert obsAshCloud[2].text == 'GND'
+    assert obsAshCloud[3].tag == 'aixm:lowerLimitReference'
+    assert obsAshCloud[3].text == 'SFC'
+
+    text = fuego.replace('OBS VA CLD: SFC/FL140', 'OBS VA CLD: TOP FL500')
+    bulletin = encoder.encode(text)
+    result = bulletin.pop()
+
+    obsAshCloud = result[8][0][1][0][0][0]
+    assert obsAshCloud[0].tag == 'aixm:upperLimit'
+    assert obsAshCloud[0].get('uom') == 'FL'
+    assert obsAshCloud[0].text == '500'
+    assert obsAshCloud[1].tag == 'aixm:upperLimitReference'
+    assert obsAshCloud[1].text == 'STD'
+
+    assert obsAshCloud[2].tag == 'aixm:lowerLimit'
+    assert obsAshCloud[2].get('nilReason') == des.MSSG
+
+    text = fuego.replace('OBS VA CLD: SFC/FL140', 'OBS VA CLD: FL050/250')
+    bulletin = encoder.encode(text)
+    result = bulletin.pop()
+
+    obsAshCloud = result[8][0][1][0][0][0]
+    assert obsAshCloud[0].tag == 'aixm:upperLimit'
+    assert obsAshCloud[0].get('uom') == 'FL'
+    assert obsAshCloud[0].text == '250'
+    assert obsAshCloud[1].tag == 'aixm:upperLimitReference'
+    assert obsAshCloud[1].text == 'STD'
+
+    assert obsAshCloud[2].tag == 'aixm:lowerLimit'
+    assert obsAshCloud[2].get('uom') == 'FL'
+    assert obsAshCloud[2].text == '50'
+    assert obsAshCloud[3].tag == 'aixm:lowerLimitReference'
+    assert obsAshCloud[3].text == 'STD'
+
+
+def test_observedAshCloudMotions():
+
+    text = fuego
+    bulletin = encoder.encode(text)
+    result = bulletin.pop()
+
+    obsMovementDir = result[8][0][1][0][1]
+    assert obsMovementDir.get('uom') == 'deg'
+    assert obsMovementDir.text == '270'
+    obsMovementSpd = result[8][0][1][0][2]
+    assert obsMovementSpd.get('uom') == '[kn_i]'
+    assert obsMovementSpd.text == '10'
+
+    text = fuego.replace('W 10KT', 'SE 40KMH')
+    bulletin = encoder.encode(text)
+    result = bulletin.pop()
+
+    obsMovementDir = result[8][0][1][0][1]
+    assert obsMovementDir.text == '135'
+    obsMovementSpd = result[8][0][1][0][2]
+    assert obsMovementSpd.get('uom') == 'km/h'
+    assert obsMovementSpd.text == '40'
+
+
+def test_observedCloudHorizontalExtent():
+
+    text = fuego
+    bulletin = encoder.encode(text)
+    result = bulletin.pop()
+
+    observation = result[8][0]
+    obsAshCloud = observation[1][0][0][0]
+
+    aixmHProj = obsAshCloud[4]
+    assert aixmHProj.tag == 'aixm:horizontalProjection'
+
+    polygonCoords = aixmHProj[0][0][0][0][0][0]
+    assert polygonCoords.get('count') == '5'
+
+    latlongpairs = polygonCoords.text
+    assert latlongpairs[:14] == latlongpairs[-14:]
+
+
+def test_vaCldNotFound():
+
+    text = semeru
+    bulletin = encoder.encode(text)
+    result = bulletin.pop()
+
+    observation = result[8][0]
+    assert observation.get('status') == 'NOT_IDENTIFIABLE'
+    assert len(observation) == 1
+    assert observation[0].tag == 'phenomenonTime'
+
+    text = semeru.replace('DATA', 'DATA WIND FL005/010 000/00MPS')
+    bulletin = encoder.encode(text)
+    result = bulletin.pop()
+    observation = result[8][0]
+    assert len(observation) == 2
+    wind = observation[1]
+
+    assert wind.tag == 'wind'
+    assert wind[0].tag == 'WindObservedOrEstimated'
+    assert wind[0].get('variableWindDirection') == 'false'
+    assert wind[0][0].tag == 'verticalLayer'
+    assert wind[0][1].tag == 'windDirection'
+    assert wind[0][1].text == '000'
+    assert wind[0][1].get('uom') == 'deg'
+    assert wind[0][2].tag == 'windSpeed'
+    assert wind[0][2].text == '00'
+    assert wind[0][2].get('uom') == 'm/s'
+
+    text = semeru.replace('DATA', 'DATA WIND FL005/010 VRB12KT')
+    bulletin = encoder.encode(text)
+    result = bulletin.pop()
+    observation = result[8][0][1][0]
+    assert observation.get('variableWindDirection') == 'true'
+    assert len(observation) == 2
+    assert observation[0].tag == 'verticalLayer'
+    assert observation[1].tag == 'windSpeed'
+    assert observation[1].text == '12'
+    assert observation[1].get('uom') == '[kn_i]'
+
 
 if __name__ == '__main__':
 
     test_vaaFailureModes()
-    test_vaaNoWinds()
-    test_vaaWndDirection()
-    test_vaaTest()
-    test_vaaExercise()
-    test_vaaNormal()
-    test_unknowns()
-    test_resuspendedash()
-    test_multipleAdvisoryStrings()
+    test_nonOperationalMessages()
+    test_sourceElevation()
+    test_volcanoInfo()
+    test_centreName()
+    test_stateOrRegion()
+    test_advisoryNumber()
+    test_infoSource()
+    test_eruptionDetails()
+    test_remarks()
+    test_nextTime()
+    test_observedCloudVerticalExtent()
+    test_observedAshCloudMotions()
+    test_observedCloudHorizontalExtent()
+    test_vaCldNotFound()
